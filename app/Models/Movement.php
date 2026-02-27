@@ -3,21 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Movement extends Model
 {
-    protected $fillable = ['operation_type'];
+    protected $fillable = ['operation_type', 'organization_id', 'comment'];
 
     const OPERATION_COMPONENT_RECEIPT     = 'component_receipt';
     const OPERATION_PRODUCT_RECEIPT       = 'product_receipt';
     const OPERATION_COMPONENT_CONSUMPTION = 'component_consumption';
+    const OPERATION_PRODUCT_PLACEMENT     = 'product_placement';
 
     public static function operationTypes(): array
     {
         return [
             self::OPERATION_COMPONENT_RECEIPT => 'კომპონენტის მიღება',
             self::OPERATION_PRODUCT_RECEIPT   => 'პროდუქტის მიღება',
+            self::OPERATION_PRODUCT_PLACEMENT => 'ობიექტზე განთავსება',
         ];
     }
 
@@ -29,6 +32,16 @@ class Movement extends Model
     public function productItems(): HasMany
     {
         return $this->hasMany(MovementProductItem::class);
+    }
+
+    public function placementItems(): HasMany
+    {
+        return $this->hasMany(MovementProductPlacementItem::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     public function consumptionMovements(): HasMany

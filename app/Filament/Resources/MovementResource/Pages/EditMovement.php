@@ -29,18 +29,15 @@ class EditMovement extends EditRecord
     protected function afterSave(): void
     {
         $movement = $this->record;
-
-        if ($movement->operation_type !== Movement::OPERATION_PRODUCT_RECEIPT) {
-            return;
-        }
-
-        $service = app(MovementService::class);
-
-        // ძველი ჩამოჭრის გაუქმება
-        $service->reverseProductReceipt($movement);
+        $service  = app(MovementService::class);
 
         try {
-            $service->processProductReceipt($movement);
+            if ($movement->operation_type === Movement::OPERATION_PRODUCT_RECEIPT) {
+                $service->reverseProductReceipt($movement);
+                $service->processProductReceipt($movement);
+            } elseif ($movement->operation_type === Movement::OPERATION_PRODUCT_PLACEMENT) {
+                $service->processProductPlacement($movement);
+            }
         } catch (InsufficientStockException $e) {
             Notification::make()
                 ->title('ნაშთი არ არის საკმარისი')

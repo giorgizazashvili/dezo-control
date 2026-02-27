@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\ComponentBalanceWidget;
+use App\Filament\Widgets\PlacementBalanceWidget;
 use App\Filament\Widgets\ProductBalanceWidget;
 use Filament\Pages\Page;
 
@@ -23,6 +24,7 @@ class StockReport extends Page
         return [
             ComponentBalanceWidget::class,
             ProductBalanceWidget::class,
+            PlacementBalanceWidget::class,
         ];
     }
 

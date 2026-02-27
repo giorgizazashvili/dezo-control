@@ -5,12 +5,15 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MovementResource\Pages;
 use App\Models\Dimension;
 use App\Models\Movement;
+use App\Models\Organization;
 use App\Models\ProductSettlement;
 use App\Models\SettlementComponent;
+use App\Services\MovementService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
@@ -145,6 +148,54 @@ class MovementResource extends Resource
                 ->reorderable()
                 ->visible(fn (Get $get) => $get('operation_type') === Movement::OPERATION_PRODUCT_RECEIPT)
                 ->columnSpanFull(),
+
+            // ობიექტზე განთავსება — დამატებითი ველები
+            Select::make('organization_id')
+                ->label('ორგანიზაცია')
+                ->relationship('organization', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->visible(fn (Get $get) => $get('operation_type') === Movement::OPERATION_PRODUCT_PLACEMENT),
+
+            Textarea::make('comment')
+                ->label('კომენტარი')
+                ->rows(2)
+                ->nullable()
+                ->visible(fn (Get $get) => $get('operation_type') === Movement::OPERATION_PRODUCT_PLACEMENT),
+
+            // ობიექტზე განთავსება
+            Repeater::make('placementItems')
+                ->label('პროდუქტები')
+                ->relationship('placementItems')
+                ->schema([
+                    Select::make('product_settlement_id')
+                        ->label('პროდუქტი')
+                        ->relationship('productSettlement', 'name', fn ($q) => $q?->with('dimension'))
+                        ->getOptionLabelFromRecordUsing(function (ProductSettlement $r) {
+                            $stock = app(MovementService::class)->getProductStock($r->id);
+
+                            return $r->name
+                                . ' — ' . ($r->dimension?->name ?? '')
+                                . ' | ნაშთი: ' . number_format($stock, 2, '.', '');
+                        })
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->columnSpan(2),
+
+                    TextInput::make('quantity')
+                        ->label('რაოდენობა')
+                        ->numeric()
+                        ->required()
+                        ->minValue(0)
+                        ->columnSpan(1),
+                ])
+                ->columns(3)
+                ->addActionLabel('პროდუქტის დამატება')
+                ->reorderable()
+                ->visible(fn (Get $get) => $get('operation_type') === Movement::OPERATION_PRODUCT_PLACEMENT)
+                ->columnSpanFull(),
         ]);
     }
 
@@ -159,9 +210,16 @@ class MovementResource extends Resource
                     ->color(fn (string $state) => match ($state) {
                         Movement::OPERATION_COMPONENT_RECEIPT => 'info',
                         Movement::OPERATION_PRODUCT_RECEIPT   => 'success',
+                        Movement::OPERATION_PRODUCT_PLACEMENT => 'warning',
                         default                               => 'gray',
                     })
                     ->sortable(),
+
+                TextColumn::make('organization.name')
+                    ->label('ორგანიზაცია')
+                    ->placeholder('—')
+                    ->searchable()
+                    ->toggleable(),
 
                 TextColumn::make('created_at')
                     ->label('თარიღი')

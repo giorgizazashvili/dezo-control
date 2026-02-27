@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Exceptions\InsufficientStockException;
 use App\Models\Movement;
 use App\Models\MovementComponentItem;
+use App\Models\MovementProductItem;
+use App\Models\MovementProductPlacementItem;
+use App\Models\ProductSettlement;
 use App\Models\SettlementComponent;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
@@ -12,28 +15,23 @@ use chillerlan\QRCode\Output\QROutputInterface;
 
 class MovementService
 {
-    /**
-     * პროდუქტის მიღების დამუშავება:
-     * 1. კომპონენტების ნაშთის შემოწმება
-     * 2. კომპონენტების ჩამოჭრა (consumption movement)
-     * 3. QR კოდების გენერაცია
-     */
+    // ═══════════════════════════════════════════════════════════════
+    // პროდუქტის მიღება
+    // ═══════════════════════════════════════════════════════════════
+
     public function processProductReceipt(Movement $movement): void
     {
         $movement->load('productItems.productSettlement.items');
 
         $required = $this->calculateRequiredComponents($movement);
 
-        $this->checkStock($required);
+        $this->checkComponentStock($required);
 
         $this->createConsumptionMovement($movement, $required);
 
         $this->generateQrCodes($movement);
     }
 
-    /**
-     * პროდუქტის მიღების შეცვლისას — ძველი ჩამოჭრის გაუქმება
-     */
     public function reverseProductReceipt(Movement $movement): void
     {
         $movement->consumptionMovements()->each(function (Movement $consumption) {
@@ -42,9 +40,27 @@ class MovementService
         });
     }
 
-    /**
-     * კომპონენტის მიმდინარე ნაშთი
-     */
+    // ═══════════════════════════════════════════════════════════════
+    // ობიექტზე განთავსება
+    // ═══════════════════════════════════════════════════════════════
+
+    public function processProductPlacement(Movement $movement): void
+    {
+        $movement->load('placementItems.productSettlement.dimension');
+
+        $this->checkProductStock($movement->placementItems, $movement->id);
+    }
+
+    public function reverseProductPlacement(Movement $movement): void
+    {
+        // placement items are deleted via cascadeOnDelete when movement is deleted
+        // for edit: Filament repeater handles deletion of old items automatically
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ნაშთები
+    // ═══════════════════════════════════════════════════════════════
+
     public function getComponentStock(int $componentId): float
     {
         $received = MovementComponentItem::query()
@@ -60,26 +76,42 @@ class MovementService
         return (float) $received - (float) $consumed;
     }
 
-    /**
-     * QR კოდის გენერაცია — SVG ფორმატი, base64
-     */
+    public function getProductStock(int $productSettlementId, ?int $excludeMovementId = null): float
+    {
+        $received = MovementProductItem::query()
+            ->whereHas('movement', fn ($q) => $q->where('operation_type', Movement::OPERATION_PRODUCT_RECEIPT))
+            ->where('product_settlement_id', $productSettlementId)
+            ->sum('quantity');
+
+        $placed = MovementProductPlacementItem::query()
+            ->whereHas('movement', fn ($q) => $q->where('operation_type', Movement::OPERATION_PRODUCT_PLACEMENT))
+            ->where('product_settlement_id', $productSettlementId)
+            ->when($excludeMovementId, fn ($q) => $q->where('movement_id', '!=', $excludeMovementId))
+            ->sum('quantity');
+
+        return (float) $received - (float) $placed;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // QR კოდი
+    // ═══════════════════════════════════════════════════════════════
+
     public function generateQrSvg(string $data): string
     {
         $options = new QROptions([
-            'outputType'   => QROutputInterface::MARKUP_SVG,
-            'outputBase64' => false,
-            'eccLevel'     => QRCode::ECC_M,
+            'outputType'     => QROutputInterface::MARKUP_SVG,
+            'outputBase64'   => false,
+            'eccLevel'       => QRCode::ECC_M,
             'svgViewBoxSize' => 400,
         ]);
 
         return (new QRCode($options))->render($data);
     }
 
-    // ─── private ──────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // private
+    // ═══════════════════════════════════════════════════════════════
 
-    /**
-     * @return array<int, float>  componentId → required_quantity
-     */
     private function calculateRequiredComponents(Movement $movement): array
     {
         $required = [];
@@ -96,10 +128,8 @@ class MovementService
         return $required;
     }
 
-    /**
-     * @throws InsufficientStockException
-     */
-    private function checkStock(array $required): void
+    /** @throws InsufficientStockException */
+    private function checkComponentStock(array $required): void
     {
         $shortages = [];
 
@@ -112,6 +142,32 @@ class MovementService
                     'component' => $component->name,
                     'dimension' => $component->dimension?->name ?? '',
                     'needed'    => round($neededQty, 4),
+                    'available' => round($available, 4),
+                ];
+            }
+        }
+
+        if (! empty($shortages)) {
+            throw new InsufficientStockException($shortages);
+        }
+    }
+
+    /** @throws InsufficientStockException */
+    private function checkProductStock(iterable $placementItems, ?int $excludeMovementId = null): void
+    {
+        $shortages = [];
+
+        foreach ($placementItems as $item) {
+            $productId = $item->product_settlement_id;
+            $needed    = (float) $item->quantity;
+            $available = $this->getProductStock($productId, $excludeMovementId);
+
+            if ($available < $needed) {
+                $product     = ProductSettlement::with('dimension')->find($productId);
+                $shortages[] = [
+                    'component' => $product->name,
+                    'dimension' => $product->dimension?->name ?? '',
+                    'needed'    => round($needed, 4),
                     'available' => round($available, 4),
                 ];
             }
@@ -154,9 +210,7 @@ class MovementService
                 'date'        => $movement->created_at->format('Y-m-d H:i'),
             ], JSON_UNESCAPED_UNICODE);
 
-            $svg = $this->generateQrSvg($payload);
-
-            $item->update(['qr_code' => $svg]);
+            $item->update(['qr_code' => $this->generateQrSvg($payload)]);
         }
     }
 }

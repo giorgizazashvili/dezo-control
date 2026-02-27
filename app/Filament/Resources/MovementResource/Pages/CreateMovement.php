@@ -21,13 +21,14 @@ class CreateMovement extends CreateRecord
     protected function afterCreate(): void
     {
         $movement = $this->record;
-
-        if ($movement->operation_type !== Movement::OPERATION_PRODUCT_RECEIPT) {
-            return;
-        }
+        $service  = app(MovementService::class);
 
         try {
-            app(MovementService::class)->processProductReceipt($movement);
+            match ($movement->operation_type) {
+                Movement::OPERATION_PRODUCT_RECEIPT   => $service->processProductReceipt($movement),
+                Movement::OPERATION_PRODUCT_PLACEMENT => $service->processProductPlacement($movement),
+                default                               => null,
+            };
         } catch (InsufficientStockException $e) {
             Notification::make()
                 ->title('ნაშთი არ არის საკმარისი')
