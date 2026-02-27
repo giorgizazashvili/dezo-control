@@ -11,6 +11,7 @@ class MovementProductItem extends Model
         'movement_id',
         'product_settlement_id',
         'quantity',
+        'qr_code',
     ];
 
     protected $casts = [

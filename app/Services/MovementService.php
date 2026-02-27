@@ -6,6 +6,9 @@ use App\Exceptions\InsufficientStockException;
 use App\Models\Movement;
 use App\Models\MovementComponentItem;
 use App\Models\SettlementComponent;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use chillerlan\QRCode\Output\QROutputInterface;
 
 class MovementService
 {
@@ -13,6 +16,7 @@ class MovementService
      * პროდუქტის მიღების დამუშავება:
      * 1. კომპონენტების ნაშთის შემოწმება
      * 2. კომპონენტების ჩამოჭრა (consumption movement)
+     * 3. QR კოდების გენერაცია
      */
     public function processProductReceipt(Movement $movement): void
     {
@@ -23,6 +27,8 @@ class MovementService
         $this->checkStock($required);
 
         $this->createConsumptionMovement($movement, $required);
+
+        $this->generateQrCodes($movement);
     }
 
     /**
@@ -52,6 +58,21 @@ class MovementService
             ->sum('quantity');
 
         return (float) $received - (float) $consumed;
+    }
+
+    /**
+     * QR კოდის გენერაცია — SVG ფორმატი, base64
+     */
+    public function generateQrSvg(string $data): string
+    {
+        $options = new QROptions([
+            'outputType'   => QROutputInterface::MARKUP_SVG,
+            'outputBase64' => false,
+            'eccLevel'     => QRCode::ECC_M,
+            'svgViewBoxSize' => 400,
+        ]);
+
+        return (new QRCode($options))->render($data);
     }
 
     // ─── private ──────────────────────────────────────────────────────────────
@@ -86,7 +107,7 @@ class MovementService
             $available = $this->getComponentStock($componentId);
 
             if ($available < $neededQty) {
-                $component  = SettlementComponent::with('dimension')->find($componentId);
+                $component   = SettlementComponent::with('dimension')->find($componentId);
                 $shortages[] = [
                     'component' => $component->name,
                     'dimension' => $component->dimension?->name ?? '',
@@ -104,16 +125,38 @@ class MovementService
     private function createConsumptionMovement(Movement $movement, array $required): void
     {
         $consumption = Movement::create([
-            'operation_type'    => Movement::OPERATION_COMPONENT_CONSUMPTION,
+            'operation_type'     => Movement::OPERATION_COMPONENT_CONSUMPTION,
             'source_movement_id' => $movement->id,
         ]);
 
         foreach ($required as $componentId => $qty) {
             MovementComponentItem::create([
-                'movement_id'              => $consumption->id,
-                'settlement_component_id'  => $componentId,
-                'quantity'                 => $qty,
+                'movement_id'             => $consumption->id,
+                'settlement_component_id' => $componentId,
+                'quantity'                => $qty,
             ]);
+        }
+    }
+
+    private function generateQrCodes(Movement $movement): void
+    {
+        $movement->load('productItems.productSettlement.dimension');
+
+        foreach ($movement->productItems as $item) {
+            $product = $item->productSettlement;
+
+            $payload = json_encode([
+                'movement_id' => $movement->id,
+                'product_id'  => $product->id,
+                'product'     => $product->name,
+                'dimension'   => $product->dimension?->name ?? '',
+                'quantity'    => (float) $item->quantity,
+                'date'        => $movement->created_at->format('Y-m-d H:i'),
+            ], JSON_UNESCAPED_UNICODE);
+
+            $svg = $this->generateQrSvg($payload);
+
+            $item->update(['qr_code' => $svg]);
         }
     }
 }
