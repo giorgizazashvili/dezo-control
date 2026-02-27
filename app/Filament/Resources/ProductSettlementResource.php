@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductSettlementResource\Pages;
+use App\Models\Dimension;
 use App\Models\ProductSettlement;
 use App\Models\SettlementComponent;
 use Filament\Actions\DeleteAction;
@@ -34,8 +35,23 @@ class ProductSettlementResource extends Resource
             TextInput::make('name')
                 ->label('დასახელება')
                 ->required()
-                ->maxLength(255)
-                ->columnSpanFull(),
+                ->maxLength(255),
+
+            Select::make('dimension_id')
+                ->label('განზომილება')
+                ->relationship('dimension', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->createOptionModalHeading('ახალი განზომილება')
+                ->createOptionForm([
+                    TextInput::make('name')
+                        ->label('დასახელება')
+                        ->required()
+                        ->unique(Dimension::class, 'name')
+                        ->maxLength(100),
+                ])
+                ->createOptionUsing(fn (array $data): int => Dimension::create($data)->id),
 
             Repeater::make('items')
                 ->label('კომპონენტები')
