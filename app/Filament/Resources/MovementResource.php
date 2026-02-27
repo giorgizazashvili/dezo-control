@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MovementResource\Pages;
+use App\Models\Dimension;
 use App\Models\Movement;
 use App\Models\ProductSettlement;
 use App\Models\SettlementComponent;
@@ -46,16 +47,37 @@ class MovementResource extends Resource
                 ->schema([
                     Select::make('settlement_component_id')
                         ->label('კომპონენტი')
-                        ->options(
-                            SettlementComponent::with('dimension')
-                                ->get()
-                                ->mapWithKeys(fn (SettlementComponent $c) => [
-                                    $c->id => $c->name . ' — ' . ($c->dimension?->name ?? ''),
-                                ])
+                        ->relationship('settlementComponent', 'name', fn ($q) => $q?->with('dimension'))
+                        ->getOptionLabelFromRecordUsing(
+                            fn (SettlementComponent $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
                         )
                         ->searchable()
+                        ->preload()
                         ->required()
-                        ->columnSpan(2),
+                        ->columnSpan(2)
+                        ->createOptionModalHeading('ახალი კომპონენტი')
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->label('დასახელება')
+                                ->required()
+                                ->maxLength(255),
+                            Select::make('dimension_id')
+                                ->label('განზომილება')
+                                ->relationship('dimension', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->createOptionModalHeading('ახალი განზომილება')
+                                ->createOptionForm([
+                                    TextInput::make('name')
+                                        ->label('დასახელება')
+                                        ->required()
+                                        ->unique(Dimension::class, 'name')
+                                        ->maxLength(100),
+                                ])
+                                ->createOptionUsing(fn (array $data): int => Dimension::create($data)->id),
+                        ])
+                        ->createOptionUsing(fn (array $data): int => SettlementComponent::create($data)->id),
 
                     TextInput::make('quantity')
                         ->label('რაოდენობა')
@@ -77,16 +99,37 @@ class MovementResource extends Resource
                 ->schema([
                     Select::make('product_settlement_id')
                         ->label('პროდუქტი')
-                        ->options(
-                            ProductSettlement::with('dimension')
-                                ->get()
-                                ->mapWithKeys(fn (ProductSettlement $p) => [
-                                    $p->id => $p->name . ' — ' . ($p->dimension?->name ?? ''),
-                                ])
+                        ->relationship('productSettlement', 'name', fn ($q) => $q?->with('dimension'))
+                        ->getOptionLabelFromRecordUsing(
+                            fn (ProductSettlement $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
                         )
                         ->searchable()
+                        ->preload()
                         ->required()
-                        ->columnSpan(2),
+                        ->columnSpan(2)
+                        ->createOptionModalHeading('ახალი პროდუქტი')
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->label('დასახელება')
+                                ->required()
+                                ->maxLength(255),
+                            Select::make('dimension_id')
+                                ->label('განზომილება')
+                                ->relationship('dimension', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->createOptionModalHeading('ახალი განზომილება')
+                                ->createOptionForm([
+                                    TextInput::make('name')
+                                        ->label('დასახელება')
+                                        ->required()
+                                        ->unique(Dimension::class, 'name')
+                                        ->maxLength(100),
+                                ])
+                                ->createOptionUsing(fn (array $data): int => Dimension::create($data)->id),
+                        ])
+                        ->createOptionUsing(fn (array $data): int => ProductSettlement::create($data)->id),
 
                     TextInput::make('quantity')
                         ->label('რაოდენობა')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Movement;
 use App\Models\SettlementComponent;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -19,15 +20,25 @@ class ComponentBalanceWidget extends TableWidget
 
     protected function getTableQuery(): Builder
     {
+        $receipt     = Movement::OPERATION_COMPONENT_RECEIPT;
+        $consumption = Movement::OPERATION_COMPONENT_CONSUMPTION;
+
         return SettlementComponent::query()
             ->select([
                 'settlement_components.id',
                 'settlement_components.name',
                 DB::raw('MAX(dimensions.name) as dimension_name'),
-                DB::raw('COALESCE(SUM(mci.quantity), 0) as total_quantity'),
+                DB::raw("
+                    COALESCE(SUM(CASE
+                        WHEN m.operation_type = '{$receipt}'     THEN mci.quantity
+                        WHEN m.operation_type = '{$consumption}' THEN -mci.quantity
+                        ELSE 0
+                    END), 0) as total_quantity
+                "),
             ])
             ->leftJoin('dimensions', 'dimensions.id', '=', 'settlement_components.dimension_id')
             ->leftJoin('movement_component_items as mci', 'mci.settlement_component_id', '=', 'settlement_components.id')
+            ->leftJoin('movements as m', 'm.id', '=', 'mci.movement_id')
             ->groupBy('settlement_components.id', 'settlement_components.name');
     }
 
