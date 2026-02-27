@@ -1,123 +1,155 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
 
-        {{-- ორგანიზაცია --}}
-        <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 p-6">
-            <label class="block text-sm font-semibold text-gray-950 dark:text-white mb-2">
-                ობიექტი (ორგანიზაცია) <span class="text-red-500">*</span>
-            </label>
-            <select wire:model.live="organizationId"
-                    class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-white">
-                <option value="">-- აირჩიეთ ორგანიზაცია --</option>
-                @foreach($this->getOrganizations() as $org)
-                    <option value="{{ $org->id }}" @selected($organizationId == $org->id)>{{ $org->name }}</option>
-                @endforeach
-            </select>
-        </div>
+    <style>
+        #qr-reader video { border-radius: 0.5rem; }
+        #qr-reader img { display: none !important; }
+        #qr-reader > div:last-child { display: none !important; }
+    </style>
+
+    <div class="max-w-2xl mx-auto space-y-6">
+
+        {{-- ობიექტის არჩევა --}}
+        <x-filament::section>
+            <x-slot name="heading">ობიექტი</x-slot>
+            <x-slot name="description">QR სკანირებამდე აირჩიეთ ობიექტი</x-slot>
+
+            <x-filament::input.wrapper>
+                <x-filament::input.select wire:model.live="organizationId">
+                    <option value="">-- აირჩიეთ ობიექტი --</option>
+                    @foreach($this->getOrganizations() as $org)
+                        <option value="{{ $org->id }}" @selected($organizationId == $org->id)>{{ $org->name }}</option>
+                    @endforeach
+                </x-filament::input.select>
+            </x-filament::input.wrapper>
+        </x-filament::section>
 
         @if($organizationId)
 
             @if(! $scannedData)
 
                 {{-- QR სკანერი --}}
-                <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 p-6">
-                    <h3 class="text-sm font-semibold text-gray-950 dark:text-white mb-4">QR კოდის სკანირება</h3>
+                <x-filament::section>
+                    <x-slot name="heading">QR სკანირება</x-slot>
+                    <x-slot name="description">მიუახლოეთ კამერა QR კოდს — ავტომატურად ამოიცნობს</x-slot>
 
                     <div x-data="monitoringQr()"
                          x-init="start()"
-                         x-on:reset-scanner.window="restart()">
+                         x-on:reset-scanner.window="restart()"
+                         class="flex flex-col items-center gap-4">
 
-                        <div id="qr-reader" class="mx-auto overflow-hidden rounded-lg" style="max-width: 380px;"></div>
+                        <div id="qr-reader" class="w-full overflow-hidden rounded-xl"
+                             style="max-width: 340px;"></div>
 
                         <p x-show="error"
                            x-text="error"
-                           class="mt-3 text-sm text-red-600 dark:text-red-400 text-center"></p>
+                           class="text-sm text-danger-600 dark:text-danger-400 text-center"></p>
 
                         <p x-show="!error"
-                           class="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
-                            კამერა ავტომატურად ამოიცნობს QR კოდს
+                           class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                            კამერა მზადაა სკანირებისთვის
                         </p>
                     </div>
-                </div>
+                </x-filament::section>
 
             @else
 
-                {{-- პროდუქტის ინფორმაცია --}}
-                <div class="rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 p-6">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-950 dark:text-white">
-                                {{ $scannedData['product'] ?? '—' }}
-                            </h3>
-                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                @if($scannedData['dimension'] ?? '')
-                                    {{ $scannedData['dimension'] }} &bull;
-                                @endif
-                                რაოდ.: {{ $scannedData['quantity'] ?? '—' }}
-                                &bull; {{ $scannedData['date'] ?? '—' }}
-                            </p>
-                        </div>
+                {{-- სკანირებული პროდუქტი --}}
+                <x-filament::section>
+                    <x-slot name="heading">{{ $scannedData['product'] ?? '—' }}</x-slot>
+                    <x-slot name="description">
+                        @if($scannedData['dimension'] ?? ''){{ $scannedData['dimension'] }} &middot; @endif
+                        რაოდ. {{ $scannedData['quantity'] ?? '—' }} &middot; {{ $scannedData['date'] ?? '—' }}
+                    </x-slot>
 
-                        <button wire:click="resetScan"
-                                class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-white/20 dark:hover:bg-white/5">
-                            ახლიდან სკანირება
-                        </button>
-                    </div>
+                    <x-filament::button
+                        wire:click="resetScan"
+                        color="gray"
+                        size="sm"
+                        icon="heroicon-m-arrow-path">
+                        ახლიდან სკანირება
+                    </x-filament::button>
+                </x-filament::section>
 
-                    {{-- კომპონენტების ცხრილი --}}
-                    @if($components && count($components) > 0)
-                        <div class="mt-6 overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="border-b border-gray-200 dark:border-white/10 text-left">
-                                        <th class="pb-3 pr-4 font-semibold text-gray-950 dark:text-white">კომპონენტი</th>
-                                        <th class="pb-3 pr-4 font-semibold text-gray-950 dark:text-white">განზომ.</th>
-                                        <th class="pb-3 pr-4 font-semibold text-gray-950 dark:text-white">საჭირო</th>
-                                        <th class="pb-3 pr-4 font-semibold text-gray-950 dark:text-white">ნაშთი</th>
-                                        <th class="pb-3 font-semibold text-gray-950 dark:text-white">მოქმედება</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($components as $component)
-                                        <tr class="border-b border-gray-100 dark:border-white/5">
-                                            <td class="py-3 pr-4 text-gray-950 dark:text-white font-medium">
+                {{-- კომპონენტები --}}
+                @if($components && count($components) > 0)
+
+                    @php
+                        $lowCount = collect($components)->filter(fn($c) => $c['stock'] < $c['needed'])->count();
+                    @endphp
+
+                    <x-filament::section>
+                        <x-slot name="heading">კომპონენტები</x-slot>
+                        <x-slot name="description">
+                            {{ count($components) }} კომპონენტი
+                            @if($lowCount > 0)
+                                &middot;
+                                <span class="text-danger-600 dark:text-danger-400 font-semibold">
+                                    {{ $lowCount }} ნაკლები ნაშთით
+                                </span>
+                            @endif
+                        </x-slot>
+
+                        <div class="-mx-6 -mb-6 divide-y divide-gray-100 dark:divide-white/5">
+                            @foreach($components as $component)
+                                @php $low = $component['stock'] < $component['needed']; @endphp
+
+                                <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+
+                                    {{-- სახელი + ნაშთი --}}
+                                    <div class="flex-1 min-w-0 space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-medium text-gray-950 dark:text-white">
                                                 {{ $component['name'] }}
-                                            </td>
-                                            <td class="py-3 pr-4 text-gray-500 dark:text-gray-400">
-                                                {{ $component['dimension'] }}
-                                            </td>
-                                            <td class="py-3 pr-4 text-gray-700 dark:text-gray-300">
+                                            </span>
+                                            @if($component['dimension'])
+                                                <x-filament::badge color="gray" size="sm">
+                                                    {{ $component['dimension'] }}
+                                                </x-filament::badge>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            ნაშთი:
+                                            <x-filament::badge :color="$low ? 'danger' : 'success'" size="sm">
+                                                {{ number_format($component['stock'], 2) }}
+                                            </x-filament::badge>
+                                            &nbsp;საჭ:
+                                            <span class="font-medium text-gray-700 dark:text-gray-300">
                                                 {{ number_format($component['needed'], 2) }}
-                                            </td>
-                                            <td class="py-3 pr-4">
-                                                @php $low = $component['stock'] < $component['needed']; @endphp
-                                                <span class="{{ $low ? 'font-semibold text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
-                                                    {{ number_format($component['stock'], 2) }}
-                                                </span>
-                                            </td>
-                                            <td class="py-3">
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <button wire:click="openWriteOff({{ $component['id'] }}, {{ $component['needed'] }})"
-                                                            class="rounded-lg bg-red-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-500 transition-colors">
-                                                        ჩამოწერა
-                                                    </button>
-                                                    <button wire:click="openReplacement({{ $component['id'] }}, {{ $component['needed'] }})"
-                                                            class="rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-green-500 transition-colors">
-                                                        შეცვლა
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                            </span>
+                                        </p>
+                                    </div>
+
+                                    {{-- ღილაკები --}}
+                                    <div class="flex items-center gap-2">
+                                        <x-filament::button
+                                            wire:click="openWriteOff({{ $component['id'] }}, {{ $component['needed'] }})"
+                                            color="danger"
+                                            size="sm"
+                                            icon="heroicon-m-minus-circle">
+                                            ჩამოწერა
+                                        </x-filament::button>
+
+                                        <x-filament::button
+                                            wire:click="openReplacement({{ $component['id'] }}, {{ $component['needed'] }})"
+                                            color="success"
+                                            size="sm"
+                                            icon="heroicon-m-plus-circle">
+                                            შეცვლა
+                                        </x-filament::button>
+                                    </div>
+
+                                </div>
+                            @endforeach
                         </div>
-                    @else
-                        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    </x-filament::section>
+
+                @else
+                    <x-filament::section>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
                             ამ პროდუქტს კომპონენტები არ აქვს.
                         </p>
-                    @endif
-                </div>
+                    </x-filament::section>
+                @endif
 
             @endif
 
@@ -126,74 +158,52 @@
     </div>
 
     {{-- ჩამოწერის მოდალი --}}
-    @if($showWriteOffModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/60" wire:click="$set('showWriteOffModal', false)"></div>
-            <div class="relative z-10 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
-                <h3 class="text-base font-semibold text-gray-950 dark:text-white mb-1">კომპონენტის ჩამოწერა</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    {{ $this->getComponentName($writeOffComponentId) }}
-                </p>
+    <x-filament::modal id="write-off-modal" width="sm">
+        <x-slot name="heading">კომპონენტის ჩამოწერა</x-slot>
+        <x-slot name="description">{{ $this->getComponentName($writeOffComponentId) }}</x-slot>
 
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        ჩამოსაწერი რაოდენობა
-                    </label>
-                    <input type="number"
-                           wire:model="writeOffQuantity"
-                           step="0.01"
-                           min="0.01"
-                           class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-white">
-                </div>
-
-                <div class="flex justify-end gap-3">
-                    <button wire:click="$set('showWriteOffModal', false)"
-                            class="rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-white/20 dark:hover:bg-white/5">
-                        გაუქმება
-                    </button>
-                    <button wire:click="confirmWriteOff"
-                            class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 transition-colors">
-                        ჩამოწერა
-                    </button>
-                </div>
-            </div>
+        <div class="space-y-2">
+            <x-filament::input.wrapper label="ჩამოსაწერი რაოდენობა">
+                <x-filament::input
+                    type="number"
+                    wire:model="writeOffQuantity"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                />
+            </x-filament::input.wrapper>
         </div>
-    @endif
+
+        <x-slot name="footer">
+            <x-filament::button wire:click="confirmWriteOff" color="danger" class="w-full">
+                ჩამოწერა
+            </x-filament::button>
+        </x-slot>
+    </x-filament::modal>
 
     {{-- შეცვლის მოდალი --}}
-    @if($showReplacementModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/60" wire:click="$set('showReplacementModal', false)"></div>
-            <div class="relative z-10 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
-                <h3 class="text-base font-semibold text-gray-950 dark:text-white mb-1">კომპონენტის შეცვლა</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    {{ $this->getComponentName($replacementComponentId) }}
-                </p>
+    <x-filament::modal id="replacement-modal" width="sm">
+        <x-slot name="heading">კომპონენტის შეცვლა</x-slot>
+        <x-slot name="description">{{ $this->getComponentName($replacementComponentId) }}</x-slot>
 
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        დასამატებელი რაოდენობა
-                    </label>
-                    <input type="number"
-                           wire:model="replacementQuantity"
-                           step="0.01"
-                           min="0.01"
-                           class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-white/10 dark:bg-white/5 dark:text-white">
-                </div>
-
-                <div class="flex justify-end gap-3">
-                    <button wire:click="$set('showReplacementModal', false)"
-                            class="rounded-lg px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50 dark:text-gray-300 dark:ring-white/20 dark:hover:bg-white/5">
-                        გაუქმება
-                    </button>
-                    <button wire:click="confirmReplacement"
-                            class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 transition-colors">
-                        შეცვლა
-                    </button>
-                </div>
-            </div>
+        <div class="space-y-2">
+            <x-filament::input.wrapper label="დასამატებელი რაოდენობა">
+                <x-filament::input
+                    type="number"
+                    wire:model="replacementQuantity"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                />
+            </x-filament::input.wrapper>
         </div>
-    @endif
+
+        <x-slot name="footer">
+            <x-filament::button wire:click="confirmReplacement" color="success" class="w-full">
+                შეცვლა
+            </x-filament::button>
+        </x-slot>
+    </x-filament::modal>
 
     @assets
         <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>

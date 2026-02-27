@@ -28,15 +28,11 @@ class Monitoring extends Page
 
     public ?array $components = null;
 
-    // Write-off modal state
-    public ?int   $writeOffComponentId = null;
-    public float  $writeOffQuantity    = 0;
-    public bool   $showWriteOffModal   = false;
+    public ?int  $writeOffComponentId    = null;
+    public float $writeOffQuantity       = 0;
 
-    // Replacement modal state
-    public ?int   $replacementComponentId = null;
-    public float  $replacementQuantity    = 0;
-    public bool   $showReplacementModal   = false;
+    public ?int  $replacementComponentId = null;
+    public float $replacementQuantity    = 0;
 
     public function processQr(string $json): void
     {
@@ -67,7 +63,7 @@ class Monitoring extends Page
     {
         $this->writeOffComponentId = $componentId;
         $this->writeOffQuantity    = $needed;
-        $this->showWriteOffModal   = true;
+        $this->dispatch('open-modal', id: 'write-off-modal');
     }
 
     public function confirmWriteOff(): void
@@ -90,7 +86,7 @@ class Monitoring extends Page
 
         Notification::make()->title('კომპონენტი ჩამოიწერა')->success()->send();
 
-        $this->showWriteOffModal = false;
+        $this->dispatch('close-modal', id: 'write-off-modal');
         $this->refreshComponents();
     }
 
@@ -98,7 +94,7 @@ class Monitoring extends Page
     {
         $this->replacementComponentId = $componentId;
         $this->replacementQuantity    = $needed;
-        $this->showReplacementModal   = true;
+        $this->dispatch('open-modal', id: 'replacement-modal');
     }
 
     public function confirmReplacement(): void
@@ -121,7 +117,7 @@ class Monitoring extends Page
 
         Notification::make()->title('კომპონენტი შეიცვალა')->success()->send();
 
-        $this->showReplacementModal = false;
+        $this->dispatch('close-modal', id: 'replacement-modal');
         $this->refreshComponents();
     }
 
@@ -137,8 +133,12 @@ class Monitoring extends Page
         return Organization::orderBy('name')->get();
     }
 
-    public function getComponentName(int $componentId): string
+    public function getComponentName(?int $componentId): string
     {
+        if ($componentId === null) {
+            return '';
+        }
+
         return collect($this->components ?? [])
             ->firstWhere('id', $componentId)['name'] ?? '';
     }
