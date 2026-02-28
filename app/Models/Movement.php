@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Movement extends Model
 {
-    protected $fillable = ['operation_type', 'organization_id', 'comment'];
+    protected $fillable = ['operation_type', 'organization_id', 'comment', 'source_movement_id'];
 
     const OPERATION_COMPONENT_RECEIPT     = 'component_receipt';
     const OPERATION_PRODUCT_RECEIPT       = 'product_receipt';

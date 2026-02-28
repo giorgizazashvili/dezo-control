@@ -202,16 +202,23 @@ class MovementResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->where('operation_type', '!=', Movement::OPERATION_COMPONENT_CONSUMPTION))
             ->columns([
                 TextColumn::make('operation_type')
                     ->label('ოპერაციის ტიპი')
-                    ->formatStateUsing(fn (string $state) => Movement::operationTypes()[$state] ?? $state)
+                    ->formatStateUsing(fn (string $state) => [
+                    Movement::OPERATION_COMPONENT_RECEIPT     => 'კომპონენტის მიღება',
+                    Movement::OPERATION_PRODUCT_RECEIPT       => 'პროდუქტის მიღება',
+                    Movement::OPERATION_COMPONENT_CONSUMPTION => 'კომპონენტის ჩამოწერა',
+                    Movement::OPERATION_PRODUCT_PLACEMENT     => 'ობიექტზე განთავსება',
+                ][$state] ?? $state)
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
-                        Movement::OPERATION_COMPONENT_RECEIPT => 'info',
-                        Movement::OPERATION_PRODUCT_RECEIPT   => 'success',
-                        Movement::OPERATION_PRODUCT_PLACEMENT => 'warning',
-                        default                               => 'gray',
+                        Movement::OPERATION_COMPONENT_RECEIPT     => 'info',
+                        Movement::OPERATION_PRODUCT_RECEIPT       => 'success',
+                        Movement::OPERATION_COMPONENT_CONSUMPTION => 'danger',
+                        Movement::OPERATION_PRODUCT_PLACEMENT     => 'warning',
+                        default                                   => 'gray',
                     })
                     ->sortable(),
 
