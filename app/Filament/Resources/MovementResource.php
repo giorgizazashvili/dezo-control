@@ -32,6 +32,8 @@ class MovementResource extends Resource
 
     protected static ?string $navigationLabel = 'მოძრაობა';
 
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $modelLabel = 'მოძრაობა';
 
     protected static ?string $pluralModelLabel = 'მოძრაობები';

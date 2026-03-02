@@ -25,6 +25,8 @@ class ProductSettlementResource extends Resource
 
     protected static ?string $navigationLabel = 'პროდუქტების დას.';
 
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $modelLabel = 'დასახლება';
 
     protected static ?string $pluralModelLabel = 'პროდუქტების დას.';

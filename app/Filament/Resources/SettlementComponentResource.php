@@ -22,6 +22,8 @@ class SettlementComponentResource extends Resource
 
     protected static ?string $navigationLabel = 'კომპონენტების დას.';
 
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $modelLabel = 'კომპონენტი';
 
     protected static ?string $pluralModelLabel = 'კომპონენტების დას.';

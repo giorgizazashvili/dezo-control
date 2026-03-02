@@ -22,6 +22,8 @@ class OrganizationResource extends Resource
 
     protected static ?string $navigationLabel = 'ორგანიზაციები';
 
+    protected static ?int $navigationSort = 3;
+
     protected static ?string $modelLabel = 'ორგანიზაცია';
 
     protected static ?string $pluralModelLabel = 'ორგანიზაციები';
