@@ -2,9 +2,12 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Dimension;
 use App\Models\Movement;
 use App\Models\ProductSettlement;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -68,6 +71,24 @@ class ProductBalanceWidget extends TableWidget
                     ->numeric(decimalPlaces: 2)
                     ->sortable()
                     ->color(fn ($state) => $state > 0 ? 'success' : 'danger'),
+            ])
+            ->filters([
+                Filter::make('dimension')
+                    ->form([
+                        Select::make('dimension_id')
+                            ->label('განზომილება')
+                            ->options(Dimension::pluck('name', 'id'))
+                            ->searchable(),
+                    ])
+                    ->query(fn ($query, array $data) => $query->when(
+                        $data['dimension_id'] ?? null,
+                        fn ($q) => $q->where('product_settlements.dimension_id', $data['dimension_id'])
+                    )),
+
+                Filter::make('positive_only')
+                    ->label('მხოლოდ დადებითი ნაშთი')
+                    ->toggle()
+                    ->query(fn ($query) => $query->havingRaw('total_quantity > 0')),
             ])
             ->actions([])
             ->paginated(false);

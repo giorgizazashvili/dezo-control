@@ -5,8 +5,11 @@ namespace App\Filament\Widgets;
 use App\Models\Movement;
 use App\Models\MovementProductItem;
 use App\Models\Organization;
+use App\Models\ProductSettlement;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -80,6 +83,31 @@ class PlacementBalanceWidget extends TableWidget
                     ))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('დახურვა'),
+            ])
+            ->filters([
+                Filter::make('organization')
+                    ->form([
+                        Select::make('organization_id')
+                            ->label('ობიექტი')
+                            ->options(Organization::pluck('name', 'id'))
+                            ->searchable(),
+                    ])
+                    ->query(fn ($query, array $data) => $query->when(
+                        $data['organization_id'] ?? null,
+                        fn ($q) => $q->where('organizations.id', $data['organization_id'])
+                    )),
+
+                Filter::make('product')
+                    ->form([
+                        Select::make('product_settlement_id')
+                            ->label('პროდუქტი')
+                            ->options(ProductSettlement::pluck('name', 'id'))
+                            ->searchable(),
+                    ])
+                    ->query(fn ($query, array $data) => $query->when(
+                        $data['product_settlement_id'] ?? null,
+                        fn ($q) => $q->where('product_settlements.id', $data['product_settlement_id'])
+                    )),
             ])
             ->defaultSort('organization_name')
             ->paginated(false);
