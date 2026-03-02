@@ -18,10 +18,11 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
 
 class MovementResource extends Resource
 {
@@ -233,20 +234,43 @@ class MovementResource extends Resource
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
+            ->filters([
+                SelectFilter::make('operation_type')
+                    ->label('ოპერაციის ტიპი')
+                    ->options([
+                        Movement::OPERATION_COMPONENT_RECEIPT => 'კომპონენტის მიღება',
+                        Movement::OPERATION_PRODUCT_RECEIPT   => 'პროდუქტის მიღება',
+                        Movement::OPERATION_PRODUCT_PLACEMENT => 'ობიექტზე განთავსება',
+                    ]),
+
+                SelectFilter::make('organization_id')
+                    ->label('ობიექტი')
+                    ->relationship('organization', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                Filter::make('created_from')
+                    ->label('თარიღიდან')
+                    ->form([
+                        DatePicker::make('created_from')->label('თარიღიდან'),
+                    ])
+                    ->query(fn ($query, array $data) => $query->when(
+                        $data['created_from'],
+                        fn ($q) => $q->whereDate('created_at', '>=', $data['created_from'])
+                    )),
+
+                Filter::make('created_until')
+                    ->label('თარიღამდე')
+                    ->form([
+                        DatePicker::make('created_until')->label('თარიღამდე'),
+                    ])
+                    ->query(fn ($query, array $data) => $query->when(
+                        $data['created_until'],
+                        fn ($q) => $q->whereDate('created_at', '<=', $data['created_until'])
+                    )),
+            ])
             ->defaultSort('created_at', 'desc')
             ->actions([
-                Action::make('qrCodes')
-                    ->label('QR კოდები')
-                    ->icon('heroicon-o-qr-code')
-                    ->color('info')
-                    ->visible(fn (Movement $record) => $record->operation_type === Movement::OPERATION_PRODUCT_RECEIPT)
-                    ->modalHeading('QR კოდები')
-                    ->modalContent(fn (Movement $record): HtmlString => new HtmlString(
-                        self::buildQrModalHtml($record)
-                    ))
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('დახურვა'),
-
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()->label('წაშლა'),
             ])
@@ -257,47 +281,7 @@ class MovementResource extends Resource
             ]);
     }
 
-    private static function buildQrModalHtml(Movement $record): string
-    {
-        $record->load('productItems.productSettlement.dimension');
-
-        $items = $record->productItems->filter(fn ($i) => ! empty($i->uuid));
-
-        if ($items->isEmpty()) {
-            return '<p class="text-center text-gray-500 py-4">QR კოდები არ მოიძებნა.</p>';
-        }
-
-        $service = app(MovementService::class);
-
-        $html = '<div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:16px;">';
-
-        foreach ($items as $item) {
-            $product   = $item->productSettlement;
-            $dimension = $product->dimension?->name ?? '';
-            $quantity  = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
-            $qrSvg     = $service->generateQrSvg($item->uuid);
-
-            $html .= '<div style="text-align:center;border:1px solid #e5e7eb;border-radius:12px;padding:16px;min-width:200px;">';
-            $html .= '<div style="width:180px;height:180px;margin:0 auto;">' . $qrSvg . '</div>';
-            $html .= '<p style="margin-top:8px;font-weight:600;font-size:14px;">' . e($product->name) . '</p>';
-            $html .= '<p style="color:#6b7280;font-size:13px;">' . e($quantity) . ' ' . e($dimension) . '</p>';
-            $html .= '</div>';
-        }
-
-        $html .= '</div>';
-
-        $html .= '
-        <div style="text-align:center;margin-top:12px;">
-            <button onclick="window.print()"
-                style="background:#3b82f6;color:#fff;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:14px;">
-                ბეჭდვა
-            </button>
-        </div>';
-
-        return $html;
-    }
-
-    public static function getPages(): array
+public static function getPages(): array
     {
         return [
             'index'  => Pages\ListMovements::route('/'),
