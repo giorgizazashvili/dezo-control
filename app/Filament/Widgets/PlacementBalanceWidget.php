@@ -87,29 +87,26 @@ class PlacementBalanceWidget extends TableWidget
 
     private function buildQrModalHtml(int $productSettlementId): string
     {
-        $items = MovementProductItem::where('product_settlement_id', $productSettlementId)
+        $item = MovementProductItem::where('product_settlement_id', $productSettlementId)
             ->whereNotNull('qr_code')
             ->with('productSettlement.dimension')
-            ->get();
+            ->latest('id')
+            ->first();
 
-        if ($items->isEmpty()) {
+        if (! $item) {
             return '<p class="text-center text-gray-500 py-4">QR კოდები არ მოიძებნა.</p>';
         }
 
-        $html = '<div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;padding:16px;">';
+        $product   = $item->productSettlement;
+        $dimension = $product->dimension?->name ?? '';
+        $quantity  = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
 
-        foreach ($items as $item) {
-            $product   = $item->productSettlement;
-            $dimension = $product->dimension?->name ?? '';
-            $quantity  = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
-
-            $html .= '<div style="text-align:center;border:1px solid #e5e7eb;border-radius:12px;padding:16px;min-width:200px;">';
-            $html .= '<div style="width:180px;height:180px;margin:0 auto;">' . $item->qr_code . '</div>';
-            $html .= '<p style="margin-top:8px;font-weight:600;font-size:14px;">' . e($product->name) . '</p>';
-            $html .= '<p style="color:#6b7280;font-size:13px;">' . e($quantity) . ' ' . e($dimension) . '</p>';
-            $html .= '</div>';
-        }
-
+        $html = '<div style="display:flex;justify-content:center;padding:16px;">';
+        $html .= '<div style="text-align:center;border:1px solid #e5e7eb;border-radius:12px;padding:16px;min-width:200px;">';
+        $html .= '<div style="width:180px;height:180px;margin:0 auto;">' . $item->qr_code . '</div>';
+        $html .= '<p style="margin-top:8px;font-weight:600;font-size:14px;">' . e($product->name) . '</p>';
+        $html .= '<p style="color:#6b7280;font-size:13px;">' . e($quantity) . ' ' . e($dimension) . '</p>';
+        $html .= '</div>';
         $html .= '</div>';
 
         $html .= '

@@ -40,12 +40,10 @@ class MonitoringService
             ->with('settlementComponent.dimension')
             ->get()
             ->map(function (ProductSettlementItem $item) {
-                $stock = $this->movementService->getComponentStock($item->settlement_component_id);
-
                 return [
                     'settlement_component_id' => $item->settlement_component_id,
                     'quantity'                => null,
-                    '_stock'                  => rtrim(rtrim(number_format($stock, 4, '.', ''), '0'), '.') ?: '0',
+                    '_stock'                  => rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.') ?: '0',
                 ];
             })
             ->all();

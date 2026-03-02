@@ -7,6 +7,7 @@ use App\Models\Monitoring;
 use App\Models\Organization;
 use App\Models\SettlementComponent;
 use App\Services\MonitoringService;
+use App\Services\MovementService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
@@ -120,16 +121,18 @@ class MonitoringResource extends Resource
                     Select::make('settlement_component_id')
                         ->label('კომპონენტი')
                         ->relationship('settlementComponent', 'name', fn ($q) => $q?->with('dimension'))
-                        ->getOptionLabelFromRecordUsing(
-                            fn (SettlementComponent $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
-                        )
+                        ->getOptionLabelFromRecordUsing(function (SettlementComponent $r) {
+                            $stock = app(MovementService::class)->getComponentStock($r->id);
+                            $stockStr = rtrim(rtrim(number_format($stock, 4, '.', ''), '0'), '.') ?: '0';
+                            return $r->name . ' — ' . ($r->dimension?->name ?? '') . ' (' . $stockStr . ')';
+                        })
                         ->searchable()
                         ->preload()
                         ->required()
                         ->columnSpan(2),
 
                     TextInput::make('_stock')
-                        ->label('ნაშთი')
+                        ->label('ნორმა')
                         ->disabled()
                         ->dehydrated(false)
                         ->placeholder('—')
