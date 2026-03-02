@@ -41,15 +41,6 @@ class MonitoringResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            // ── ობიექტი ────────────────────────────────────────────────
-            Select::make('organization_id')
-                ->label('ობიექტი')
-                ->relationship('organization', 'name')
-                ->searchable()
-                ->preload()
-                ->required()
-                ->columnSpanFull(),
-
             // ── ბოქსის QR სკანი ────────────────────────────────────────
             TextInput::make('qr_data')
                 ->label('QR კოდი (სკანი)')
@@ -69,6 +60,8 @@ class MonitoringResource extends Resource
                     if ($item) {
                         $product = $item->productSettlement;
                         $set('movement_product_item_id', $item->id);
+                        $orgId = app(MonitoringService::class)->getPlacementOrganizationId($item->product_settlement_id);
+                        $set('organization_id', $orgId);
                         $set('_box_product', $product->name . ' — ' . ($product->dimension?->name ?? ''));
                         $set('_box_quantity', rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.'));
                         $set('_box_date', $item->movement->created_at->format('d.m.Y H:i'));
@@ -83,6 +76,15 @@ class MonitoringResource extends Resource
 
             Hidden::make('movement_product_item_id')
                 ->required(),
+
+            // ── ობიექტი ────────────────────────────────────────────────
+            Select::make('organization_id')
+                ->label('ობიექტი')
+                ->relationship('organization', 'name')
+                ->disabled()
+                ->dehydrated()
+                ->required()
+                ->columnSpanFull(),
 
             // ── ბოქსის მონაცემები (ავტო-შევსება) ─────────────────────
             TextInput::make('_box_product')

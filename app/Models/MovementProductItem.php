@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class MovementProductItem extends Model
 {
@@ -12,11 +13,21 @@ class MovementProductItem extends Model
         'product_settlement_id',
         'quantity',
         'qr_code',
+        'uuid',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:4',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $item) {
+            if (empty($item->uuid)) {
+                $item->uuid = (string) Str::uuid();
+            }
+        });
+    }
 
     public function movement(): BelongsTo
     {

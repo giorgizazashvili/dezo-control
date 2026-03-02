@@ -8,6 +8,7 @@ use App\Models\MonitoringComponentReplacement;
 use App\Models\Movement;
 use App\Models\MovementComponentItem;
 use App\Models\MovementProductItem;
+use App\Models\MovementProductPlacementItem;
 use App\Models\SettlementComponent;
 
 class MonitoringService
@@ -19,21 +20,29 @@ class MonitoringService
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * სკანირებული JSON-იდან MovementProductItem-ის პოვნა.
+     * სკანირებული UUID-იდან MovementProductItem-ის პოვნა.
      */
-    public function findBoxFromQr(string $qrJson): ?MovementProductItem
+    public function findBoxFromQr(string $uuid): ?MovementProductItem
     {
-        $data = json_decode($qrJson, true);
-
-        if (! is_array($data) || empty($data['movement_id']) || empty($data['product_id'])) {
-            return null;
-        }
-
         return MovementProductItem::query()
-            ->where('movement_id', $data['movement_id'])
-            ->where('product_settlement_id', $data['product_id'])
-            ->with('productSettlement.dimension')
+            ->where('uuid', trim($uuid))
+            ->with(['productSettlement.dimension', 'movement'])
             ->first();
+    }
+
+    /**
+     * პროდუქტის ბოლო განთავსების ობიექტის ID.
+     */
+    public function getPlacementOrganizationId(int $productSettlementId): ?int
+    {
+        $placement = MovementProductPlacementItem::query()
+            ->where('product_settlement_id', $productSettlementId)
+            ->whereHas('movement', fn ($q) => $q->where('operation_type', Movement::OPERATION_PRODUCT_PLACEMENT))
+            ->with('movement')
+            ->latest('id')
+            ->first();
+
+        return $placement?->movement?->organization_id;
     }
 
     // ═══════════════════════════════════════════════════════════════

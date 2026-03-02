@@ -196,21 +196,10 @@ class MovementService
 
     private function generateQrCodes(Movement $movement): void
     {
-        $movement->load('productItems.productSettlement.dimension');
+        $movement->load('productItems');
 
         foreach ($movement->productItems as $item) {
-            $product = $item->productSettlement;
-
-            $payload = json_encode([
-                'movement_id' => $movement->id,
-                'product_id'  => $product->id,
-                'product'     => $product->name,
-                'dimension'   => $product->dimension?->name ?? '',
-                'quantity'    => (float) $item->quantity,
-                'date'        => $movement->created_at->format('Y-m-d H:i'),
-            ], JSON_UNESCAPED_UNICODE);
-
-            $item->update(['qr_code' => $this->generateQrSvg($payload)]);
+            $item->update(['qr_code' => $this->generateQrSvg($item->uuid)]);
         }
     }
 }
