@@ -22,6 +22,8 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Marcelorodrigo\FilamentBarcodeScannerField\Forms\Components\BarcodeInput;
+
 
 class MonitoringResource extends Resource
 {
@@ -41,7 +43,7 @@ class MonitoringResource extends Resource
     {
         return $schema->components([
             // ── ბოქსის QR სკანი ────────────────────────────────────────
-            TextInput::make('qr_data')
+           BarcodeInput::make('qr_data')
                 ->label('QR კოდი (სკანი)')
                 ->placeholder('სკანერი ჩასვამს მონაცემებს...')
                 ->live()
