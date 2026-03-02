@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MonitoringResource\Pages;
-use App\Models\Dimension;
 use App\Models\Monitoring;
 use App\Models\Organization;
 use App\Models\SettlementComponent;
@@ -52,24 +51,27 @@ class MonitoringResource extends Resource
                         $set('_box_product', null);
                         $set('_box_quantity', null);
                         $set('_box_date', null);
+                        $set('componentReplacements', []);
                         return;
                     }
 
-                    $item = app(MonitoringService::class)->findBoxFromQr($state);
+                    $service = app(MonitoringService::class);
+                    $item    = $service->findBoxFromQr($state);
 
                     if ($item) {
                         $product = $item->productSettlement;
                         $set('movement_product_item_id', $item->id);
-                        $orgId = app(MonitoringService::class)->getPlacementOrganizationId($item->product_settlement_id);
-                        $set('organization_id', $orgId);
+                        $set('organization_id', $service->getPlacementOrganizationId($item->product_settlement_id));
                         $set('_box_product', $product->name . ' — ' . ($product->dimension?->name ?? ''));
                         $set('_box_quantity', rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.'));
                         $set('_box_date', $item->movement->created_at->format('d.m.Y H:i'));
+                        $set('componentReplacements', $service->getProductComponentsWithStock($item->product_settlement_id));
                     } else {
                         $set('movement_product_item_id', null);
                         $set('_box_product', 'ბოქსი ვერ მოიძებნა');
                         $set('_box_quantity', null);
                         $set('_box_date', null);
+                        $set('componentReplacements', []);
                     }
                 })
                 ->columnSpanFull(),
@@ -122,39 +124,24 @@ class MonitoringResource extends Resource
                         ->searchable()
                         ->preload()
                         ->required()
-                        ->columnSpan(2)
-                        ->createOptionModalHeading('ახალი კომპონენტი')
-                        ->createOptionForm([
-                            TextInput::make('name')
-                                ->label('დასახელება')
-                                ->required()
-                                ->maxLength(255),
-                            Select::make('dimension_id')
-                                ->label('განზომილება')
-                                ->relationship('dimension', 'name')
-                                ->searchable()
-                                ->preload()
-                                ->required()
-                                ->createOptionModalHeading('ახალი განზომილება')
-                                ->createOptionForm([
-                                    TextInput::make('name')
-                                        ->label('დასახელება')
-                                        ->required()
-                                        ->unique(Dimension::class, 'name')
-                                        ->maxLength(100),
-                                ])
-                                ->createOptionUsing(fn (array $data): int => Dimension::create($data)->id),
-                        ])
-                        ->createOptionUsing(fn (array $data): int => SettlementComponent::create($data)->id),
+                        ->columnSpan(2),
+
+                    TextInput::make('_stock')
+                        ->label('ნაშთი')
+                        ->disabled()
+                        ->dehydrated(false)
+                        ->placeholder('—')
+                        ->columnSpan(1),
 
                     TextInput::make('quantity')
-                        ->label('რაოდენობა')
+                        ->label('ჩასანაცვლებელი')
                         ->numeric()
-                        ->required()
                         ->minValue(0)
+                        ->nullable()
+                        ->placeholder('0')
                         ->columnSpan(1),
                 ])
-                ->columns(3)
+                ->columns(4)
                 ->addActionLabel('კომპონენტის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),

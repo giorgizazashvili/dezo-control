@@ -9,6 +9,7 @@ use App\Models\Movement;
 use App\Models\MovementComponentItem;
 use App\Models\MovementProductItem;
 use App\Models\MovementProductPlacementItem;
+use App\Models\ProductSettlementItem;
 use App\Models\SettlementComponent;
 
 class MonitoringService
@@ -28,6 +29,26 @@ class MonitoringService
             ->where('uuid', trim($uuid))
             ->with(['productSettlement.dimension', 'movement'])
             ->first();
+    }
+
+    /**
+     * პროდუქტის კომპოზიციის კომპონენტები მიმდინარე ნაშთებით.
+     */
+    public function getProductComponentsWithStock(int $productSettlementId): array
+    {
+        return ProductSettlementItem::where('product_settlement_id', $productSettlementId)
+            ->with('settlementComponent.dimension')
+            ->get()
+            ->map(function (ProductSettlementItem $item) {
+                $stock = $this->movementService->getComponentStock($item->settlement_component_id);
+
+                return [
+                    'settlement_component_id' => $item->settlement_component_id,
+                    'quantity'                => null,
+                    '_stock'                  => rtrim(rtrim(number_format($stock, 4, '.', ''), '0'), '.') ?: '0',
+                ];
+            })
+            ->all();
     }
 
     /**
@@ -52,6 +73,10 @@ class MonitoringService
     /** @throws InsufficientStockException */
     public function processComponentReplacements(Monitoring $monitoring): void
     {
+        $monitoring->componentReplacements()
+            ->where(fn ($q) => $q->whereNull('quantity')->orWhere('quantity', '<=', 0))
+            ->delete();
+
         $monitoring->load('componentReplacements');
 
         $required = [];
