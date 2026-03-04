@@ -216,31 +216,45 @@ class MonitoringService
             return;
         }
 
-        // ვიანგარიშებ: ახალი ტიპი → ჩანაცვლებული ორიგინალი
         $monitoring->load('movementProductItem');
-        $productSettlementId = $monitoring->movementProductItem->product_settlement_id;
+        $movementProductItemId = $monitoring->movement_product_item_id;
+        $productSettlementId   = $monitoring->movementProductItem->product_settlement_id;
 
-        $originalIds = ProductSettlementItem::where('product_settlement_id', $productSettlementId)
-            ->pluck('settlement_component_id')
-            ->toArray();
+        // ბოქსის წინა მდგომარეობა (ამ მონიტორინგამდე რა კომპონენტები იყო)
+        $previousMonitoringId = MonitoringComponentReplacement::query()
+            ->whereHas('monitoring', fn ($q) => $q
+                ->where('movement_product_item_id', $movementProductItemId)
+                ->where('id', '!=', $monitoring->id))
+            ->max('monitoring_id');
 
-        // ახალი ტიპები (required-ში არიან, ორიგინალში — არა)
-        $newTypeIds = array_values(array_diff(array_keys($required), $originalIds));
-        // ორიგინალები, რომლებიც required-ში არ მოხვდნენ (ამათი slot-ები ახლებმა დაიკავეს)
-        $uncoveredOriginalIds = array_values(array_diff($originalIds, array_keys($required)));
+        if ($previousMonitoringId) {
+            $previousIds = MonitoringComponentReplacement::where('monitoring_id', $previousMonitoringId)
+                ->pluck('settlement_component_id')
+                ->toArray();
+        } else {
+            $previousIds = ProductSettlementItem::where('product_settlement_id', $productSettlementId)
+                ->pluck('settlement_component_id')
+                ->toArray();
+        }
 
-        // mapping: new_component_id => replaced_original_id
+        // ახალი ტიპები (required-ში არიან, წინა მდგომარეობაში — არა)
+        $newTypeIds           = array_values(array_diff(array_keys($required), $previousIds));
+        // წინა კომპონენტები, რომლებიც required-ში არ მოხვდნენ (ამათი slot-ები ახლებმა დაიკავეს)
+        $uncoveredPreviousIds = array_values(array_diff($previousIds, array_keys($required)));
+
+        // mapping: new_component_id => replaced_previous_id
         $substitutionMap = [];
         foreach ($newTypeIds as $i => $newId) {
-            $substitutionMap[$newId] = $uncoveredOriginalIds[$i] ?? null;
+            $substitutionMap[$newId] = $uncoveredPreviousIds[$i] ?? null;
         }
 
         foreach ($required as $componentId => $qty) {
             MonitoringLog::create(array_merge($base, [
-                'type'                            => 'replacement',
-                'settlement_component_id'         => $componentId,
-                'replaced_settlement_component_id' => $substitutionMap[$componentId] ?? null,
-                'quantity'                        => $qty,
+                'type'                             => 'replacement',
+                'settlement_component_id'          => $componentId,
+                // თუ სხვა ტიპით ჩანაცვლება — substitutionMap, თუ იგივე ტიპი — $componentId (a→a)
+                'replaced_settlement_component_id' => $substitutionMap[$componentId] ?? $componentId,
+                'quantity'                         => $qty,
             ]));
         }
     }

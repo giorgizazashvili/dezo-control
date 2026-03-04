@@ -64,25 +64,25 @@ class MonitoringLogResource extends Resource
                         default       => 'gray',
                     }),
 
-                TextColumn::make('settlementComponent.name')
-                    ->label('კომპონენტი (რამ ჩაანაცვლა)')
+                TextColumn::make('replacedComponent.name')
+                    ->label('რა იყო')
                     ->getStateUsing(function (MonitoringLog $record): string {
                         if ($record->type !== 'replacement') {
                             return '—';
                         }
+                        return $record->replacedComponent?->name ?? '—';
+                    })
+                    ->placeholder('—'),
 
-                        $new = $record->settlementComponent?->name ?? '—';
-
-                        if (
-                            $record->replaced_settlement_component_id &&
-                            $record->replaced_settlement_component_id !== $record->settlement_component_id
-                        ) {
-                            $old = $record->replacedComponent?->name ?? '—';
-                            return "{$old} → {$new}";
+                TextColumn::make('settlementComponent.name')
+                    ->label('რითი ჩაანაცვლდა')
+                    ->getStateUsing(function (MonitoringLog $record): string {
+                        if ($record->type !== 'replacement') {
+                            return '—';
                         }
-
-                        return $new;
-                    }),
+                        return $record->settlementComponent?->name ?? '—';
+                    })
+                    ->placeholder('—'),
 
                 TextColumn::make('quantity')
                     ->label('რაოდენობა')
