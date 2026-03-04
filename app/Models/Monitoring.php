@@ -30,6 +30,11 @@ class Monitoring extends Model
         return $this->hasMany(MonitoringComponentReplacement::class);
     }
 
+    public function logs(): HasMany
+    {
+        return $this->hasMany(MonitoringLog::class);
+    }
+
     public function getParsedQrAttribute(): ?array
     {
         if (! $this->qr_data) {

@@ -68,7 +68,7 @@ class MonitoringResource extends Resource
                         $set('_box_product', $product->name . ' — ' . ($product->dimension?->name ?? ''));
                         $set('_box_quantity', rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.'));
                         $set('_box_date', $item->movement->created_at->format('d.m.Y H:i'));
-                        $set('componentReplacements', $service->getProductComponentsWithStock($item->product_settlement_id));
+                        $set('componentReplacements', $service->getProductComponentsWithStock($item->product_settlement_id, $item->id));
                     } else {
                         $set('movement_product_item_id', null);
                         $set('_box_product', 'ბოქსი ვერ მოიძებნა');
