@@ -46,7 +46,7 @@ class OrganizationResource extends Resource
                 ->label('საიდენტიფიკაციო კოდი')
                 ->required()
                 ->unique(ignoreRecord: true)
-                ->maxLength(50),
+                ->maxLength(12),
 
             TextInput::make('address')
                 ->label('მისამართი')
