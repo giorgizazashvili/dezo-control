@@ -81,8 +81,13 @@ class ProductPlacementResource extends Resource
                         ->required()
                         ->minValue(0)
                         ->columnSpan(1),
+
+                    TextInput::make('unique_code')
+                        ->label('უნიკალური კოდი')
+                        ->nullable()
+                        ->columnSpan(1),
                 ])
-                ->columns(3)
+                ->columns(4)
                 ->addActionLabel('პროდუქტის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),
