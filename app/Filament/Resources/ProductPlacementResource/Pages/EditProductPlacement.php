@@ -1,18 +1,17 @@
 <?php
 
-namespace App\Filament\Resources\MovementResource\Pages;
+namespace App\Filament\Resources\ProductPlacementResource\Pages;
 
 use App\Exceptions\InsufficientStockException;
-use App\Filament\Resources\MovementResource;
-use App\Models\Movement;
+use App\Filament\Resources\ProductPlacementResource;
 use App\Services\MovementService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
-class EditMovement extends EditRecord
+class EditProductPlacement extends EditRecord
 {
-    protected static string $resource = MovementResource::class;
+    protected static string $resource = ProductPlacementResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -29,15 +28,9 @@ class EditMovement extends EditRecord
     protected function afterSave(): void
     {
         $movement = $this->record;
-        $service  = app(MovementService::class);
 
         try {
-            if ($movement->operation_type === Movement::OPERATION_PRODUCT_RECEIPT) {
-                $service->reverseProductReceipt($movement);
-                $service->processProductReceipt($movement);
-            } elseif ($movement->operation_type === Movement::OPERATION_PRODUCT_PLACEMENT) {
-                $service->processProductPlacement($movement);
-            }
+            app(MovementService::class)->processProductPlacement($movement);
         } catch (InsufficientStockException $e) {
             Notification::make()
                 ->title('ნაშთი არ არის საკმარისი')
