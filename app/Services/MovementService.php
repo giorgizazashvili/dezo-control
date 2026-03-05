@@ -61,6 +61,55 @@ class MovementService
     // ნაშთები
     // ═══════════════════════════════════════════════════════════════
 
+    // ═══════════════════════════════════════════════════════════════
+    // კომპონენტის გახარჯვა
+    // ═══════════════════════════════════════════════════════════════
+
+    /** @throws InsufficientStockException */
+    public function processComponentConsumption(Movement $movement): void
+    {
+        $movement->load('componentItems.settlementComponent.dimension');
+
+        $shortages = [];
+
+        foreach ($movement->componentItems as $item) {
+            $needed    = (float) $item->quantity;
+            $available = $this->getComponentStockExcluding($item->settlement_component_id, $movement->id);
+
+            if ($available < $needed) {
+                $component   = $item->settlementComponent;
+                $shortages[] = [
+                    'component' => $component->name,
+                    'dimension' => $component->dimension?->name ?? '',
+                    'needed'    => round($needed, 4),
+                    'available' => round($available, 4),
+                ];
+            }
+        }
+
+        if (! empty($shortages)) {
+            throw new InsufficientStockException($shortages);
+        }
+    }
+
+    public function getComponentStockExcluding(int $componentId, int $excludeMovementId): float
+    {
+        $received = MovementComponentItem::query()
+            ->whereHas('movement', fn ($q) => $q->where('operation_type', Movement::OPERATION_COMPONENT_RECEIPT))
+            ->where('settlement_component_id', $componentId)
+            ->sum('quantity');
+
+        $consumed = MovementComponentItem::query()
+            ->whereHas('movement', fn ($q) => $q
+                ->where('operation_type', Movement::OPERATION_COMPONENT_CONSUMPTION)
+                ->where('id', '!=', $excludeMovementId)
+            )
+            ->where('settlement_component_id', $componentId)
+            ->sum('quantity');
+
+        return (float) $received - (float) $consumed;
+    }
+
     public function getComponentStock(int $componentId): float
     {
         $received = MovementComponentItem::query()

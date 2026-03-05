@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProductReceiptResource\Pages;
+use App\Filament\Resources\ComponentConsumptionResource\Pages;
 use App\Models\Dimension;
 use App\Models\Movement;
-use App\Models\ProductSettlement;
+use App\Models\SettlementComponent;
 use App\Services\MovementService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -16,48 +16,62 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
 
-class ProductReceiptResource extends Resource
+class ComponentConsumptionResource extends Resource
 {
     protected static ?string $model = Movement::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-arrow-down';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-trending-down';
 
-    protected static ?string $navigationLabel = 'პროდუქტის მიღება';
+    protected static ?string $navigationLabel = 'კომპონენტის გახარჯვა';
 
-    protected static ?string $slug = 'product-receipts';
+    protected static ?string $slug = 'component-consumptions';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 5;
 
-    protected static ?string $modelLabel = 'პროდუქტის მიღება';
+    protected static ?string $modelLabel = 'კომპონენტის გახარჯვა';
 
-    protected static ?string $pluralModelLabel = 'პროდუქტის მიღებები';
+    protected static ?string $pluralModelLabel = 'კომპონენტის გახარჯვები';
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return parent::getEloquentQuery()->where('operation_type', Movement::OPERATION_PRODUCT_RECEIPT);
+        return parent::getEloquentQuery()
+            ->where('operation_type', Movement::OPERATION_COMPONENT_CONSUMPTION)
+            ->whereNull('source_movement_id');
     }
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Repeater::make('productItems')
-                ->label('პროდუქტები')
-                ->relationship('productItems')
+            Select::make('organization_id')
+                ->label('ობიექტი')
+                ->relationship('organization', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->columnSpanFull(),
+
+            Repeater::make('componentItems')
+                ->label('კომპონენტები')
+                ->relationship('componentItems')
                 ->schema([
-                    Select::make('product_settlement_id')
-                        ->label('პროდუქტი')
-                        ->relationship('productSettlement', 'name', fn ($q) => $q?->with('dimension'))
-                        ->getOptionLabelFromRecordUsing(
-                            fn (ProductSettlement $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
-                        )
+                    Select::make('settlement_component_id')
+                        ->label('კომპონენტი')
+                        ->relationship('settlementComponent', 'name', fn ($q) => $q?->with('dimension'))
+                        ->getOptionLabelFromRecordUsing(function (SettlementComponent $r) {
+                            $stock    = app(MovementService::class)->getComponentStock($r->id);
+                            $stockStr = rtrim(rtrim(number_format($stock, 4, '.', ''), '0'), '.') ?: '0';
+
+                            return $r->name . ' — ' . ($r->dimension?->name ?? '') . ' | ნაშთი: ' . $stockStr;
+                        })
                         ->searchable()
                         ->preload()
                         ->required()
                         ->columnSpan(2)
-                        ->createOptionModalHeading('ახალი პროდუქტი')
+                        ->createOptionModalHeading('ახალი კომპონენტი')
                         ->createOptionForm([
                             TextInput::make('name')
                                 ->label('დასახელება')
@@ -79,7 +93,7 @@ class ProductReceiptResource extends Resource
                                 ])
                                 ->createOptionUsing(fn (array $data): int => Dimension::create($data)->id),
                         ])
-                        ->createOptionUsing(fn (array $data): int => ProductSettlement::create($data)->id),
+                        ->createOptionUsing(fn (array $data): int => SettlementComponent::create($data)->id),
 
                     TextInput::make('quantity')
                         ->label('რაოდენობა')
@@ -89,7 +103,7 @@ class ProductReceiptResource extends Resource
                         ->columnSpan(1),
                 ])
                 ->columns(3)
-                ->addActionLabel('პროდუქტის დამატება')
+                ->addActionLabel('კომპონენტის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),
         ]);
@@ -99,12 +113,23 @@ class ProductReceiptResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('organization.name')
+                    ->label('ობიექტი')
+                    ->placeholder('—')
+                    ->searchable(),
+
                 TextColumn::make('created_at')
                     ->label('თარიღი')
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
             ->filters([
+                SelectFilter::make('organization_id')
+                    ->label('ობიექტი')
+                    ->relationship('organization', 'name')
+                    ->searchable()
+                    ->preload(),
+
                 Filter::make('created_from')
                     ->label('თარიღიდან')
                     ->form([
@@ -140,9 +165,9 @@ class ProductReceiptResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProductReceipts::route('/'),
-            'create' => Pages\CreateProductReceipt::route('/create'),
-            'edit'   => Pages\EditProductReceipt::route('/{record}/edit'),
+            'index'  => Pages\ListComponentConsumptions::route('/'),
+            'create' => Pages\CreateComponentConsumption::route('/create'),
+            'edit'   => Pages\EditComponentConsumption::route('/{record}/edit'),
         ];
     }
 }
