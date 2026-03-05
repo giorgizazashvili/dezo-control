@@ -15,7 +15,7 @@ class StockReport extends Page
 
     protected static ?string $title = 'ნაშთების რეპორტი';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 7;
 
     protected string $view = 'filament-panels::pages.page';
 
