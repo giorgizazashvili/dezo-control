@@ -13,6 +13,11 @@ class Monitoring extends Model
         'movement_product_item_id',
         'qr_data',
         'notes',
+        'pest_type',
+        'pest_quantity',
+        'bait_status',
+        'action_taken',
+        'inspection_note',
     ];
 
     public function organization(): BelongsTo

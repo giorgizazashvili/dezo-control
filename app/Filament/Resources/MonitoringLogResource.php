@@ -4,14 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MonitoringLogResource\Pages;
 use App\Models\MonitoringLog;
+use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Filament\Forms\Components\DatePicker;
 
 class MonitoringLogResource extends Resource
 {
@@ -41,27 +40,72 @@ class MonitoringLogResource extends Resource
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
 
-                TextColumn::make('organization.name')
-                    ->label('ობიექტი')
-                    ->searchable()
-                    ->sortable(),
+                TextColumn::make('user.name')
+                    ->label('ტექნიკოსი')
+                    ->placeholder('—')
+                    ->searchable(),
+
+                TextColumn::make('unique_code')
+                    ->label('მოწყობილობის ID')
+                    ->placeholder('—')
+                    ->searchable(),
 
                 TextColumn::make('movementProductItem.productSettlement.name')
-                    ->label('პროდუქტი')
+                    ->label('მოწყობილობის ტიპი')
                     ->placeholder('—'),
+
+                TextColumn::make('zone')
+                    ->label('ზონა')
+                    ->placeholder('—'),
+
+                TextColumn::make('location')
+                    ->label('მდებარეობა')
+                    ->placeholder('—'),
+
+                TextColumn::make('inspection_status')
+                    ->label('ინსპექციის სტატუსი')
+                    ->placeholder('—')
+                    ->badge()
+                    ->color('success'),
+
+                TextColumn::make('pest_type')
+                    ->label('მავნებლის ტიპი')
+                    ->placeholder('—'),
+
+                TextColumn::make('pest_quantity')
+                    ->label('მავნებლის რაოდენობა')
+                    ->formatStateUsing(fn ($state) => $state
+                        ? rtrim(rtrim(number_format((float) $state, 4, '.', ''), '0'), '.')
+                        : '—'
+                    )
+                    ->placeholder('—'),
+
+                TextColumn::make('bait_status')
+                    ->label('სატყუარას მდგომარეობა')
+                    ->placeholder('—'),
+
+                TextColumn::make('action_taken')
+                    ->label('მიღებული ზომა')
+                    ->placeholder('—')
+                    ->limit(40),
+
+                TextColumn::make('inspection_note')
+                    ->label('ინსპექციის შენიშვნა')
+                    ->placeholder('—')
+                    ->limit(40),
 
                 TextColumn::make('type')
                     ->label('ტიპი')
                     ->badge()
                     ->formatStateUsing(fn (string $state) => match ($state) {
-                        'inspection'  => 'შემოწმება',
+                        'inspection' => 'შემოწმება',
                         'replacement' => 'ამოცვლა',
-                        default       => $state,
+                        default => $state,
                     })
                     ->color(fn (string $state) => match ($state) {
-                        'inspection'  => 'success',
+                        'inspection' => 'success',
                         'replacement' => 'warning',
-                        default       => 'gray',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('replacedComponent.name')
@@ -70,6 +114,7 @@ class MonitoringLogResource extends Resource
                         if ($record->type !== 'replacement') {
                             return '—';
                         }
+
                         return $record->replacedComponent?->name ?? '—';
                     })
                     ->placeholder('—'),
@@ -80,12 +125,13 @@ class MonitoringLogResource extends Resource
                         if ($record->type !== 'replacement') {
                             return '—';
                         }
+
                         return $record->settlementComponent?->name ?? '—';
                     })
                     ->placeholder('—'),
 
                 TextColumn::make('quantity')
-                    ->label('რაოდენობა')
+                    ->label('ჩანაცვლების რაოდენობა')
                     ->formatStateUsing(fn ($state) => $state
                         ? rtrim(rtrim(number_format((float) $state, 4, '.', ''), '0'), '.')
                         : '—'
@@ -105,7 +151,7 @@ class MonitoringLogResource extends Resource
                 SelectFilter::make('type')
                     ->label('ტიპი')
                     ->options([
-                        'inspection'  => 'შემოწმება',
+                        'inspection' => 'შემოწმება',
                         'replacement' => 'ამოცვლა',
                     ]),
 
@@ -117,7 +163,7 @@ class MonitoringLogResource extends Resource
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['from'],  fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+                            ->when($data['from'], fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
                             ->when($data['until'], fn ($q, $d) => $q->whereDate('created_at', '<=', $d));
                     }),
             ])

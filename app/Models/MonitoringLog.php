@@ -9,6 +9,7 @@ class MonitoringLog extends Model
 {
     protected $fillable = [
         'monitoring_id',
+        'user_id',
         'organization_id',
         'movement_product_item_id',
         'type',
@@ -16,6 +17,15 @@ class MonitoringLog extends Model
         'replaced_settlement_component_id',
         'quantity',
         'notes',
+        'unique_code',
+        'zone',
+        'location',
+        'inspection_status',
+        'pest_type',
+        'pest_quantity',
+        'bait_status',
+        'action_taken',
+        'inspection_note',
     ];
 
     protected $casts = [
@@ -25,6 +35,11 @@ class MonitoringLog extends Model
     public function monitoring(): BelongsTo
     {
         return $this->belongsTo(Monitoring::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function organization(): BelongsTo

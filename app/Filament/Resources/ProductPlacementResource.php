@@ -8,6 +8,7 @@ use App\Models\ProductSettlement;
 use App\Services\MovementService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -17,7 +18,6 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
 
 class ProductPlacementResource extends Resource
@@ -67,8 +67,8 @@ class ProductPlacementResource extends Resource
                             $stock = app(MovementService::class)->getProductStock($r->id);
 
                             return $r->name
-                                . ' — ' . ($r->dimension?->name ?? '')
-                                . ' | ნაშთი: ' . number_format($stock, 2, '.', '');
+                                .' — '.($r->dimension?->name ?? '')
+                                .' | ნაშთი: '.number_format($stock, 2, '.', '');
                         })
                         ->searchable()
                         ->preload()
@@ -86,8 +86,18 @@ class ProductPlacementResource extends Resource
                         ->label('უნიკალური კოდი')
                         ->nullable()
                         ->columnSpan(1),
+
+                    TextInput::make('zone')
+                        ->label('ზონა')
+                        ->nullable()
+                        ->columnSpan(1),
+
+                    TextInput::make('location')
+                        ->label('მდებარეობა')
+                        ->nullable()
+                        ->columnSpan(1),
                 ])
-                ->columns(4)
+                ->columns(5)
                 ->addActionLabel('პროდუქტის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),
@@ -150,9 +160,9 @@ class ProductPlacementResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProductPlacements::route('/'),
+            'index' => Pages\ListProductPlacements::route('/'),
             'create' => Pages\CreateProductPlacement::route('/create'),
-            'edit'   => Pages\EditProductPlacement::route('/{record}/edit'),
+            'edit' => Pages\EditProductPlacement::route('/{record}/edit'),
         ];
     }
 }

@@ -4,17 +4,15 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MonitoringResource\Pages;
 use App\Models\Monitoring;
-use App\Models\Organization;
 use App\Models\SettlementComponent;
 use App\Services\MonitoringService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Hidden;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -23,7 +21,6 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Marcelorodrigo\FilamentBarcodeScannerField\Forms\Components\BarcodeInput;
-
 
 class MonitoringResource extends Resource
 {
@@ -43,7 +40,7 @@ class MonitoringResource extends Resource
     {
         return $schema->components([
             // ── ბოქსის QR სკანი ────────────────────────────────────────
-           BarcodeInput::make('qr_data')
+            BarcodeInput::make('qr_data')
                 ->label('QR კოდი (სკანი)')
                 ->placeholder('სკანერი ჩასვამს მონაცემებს...')
                 ->live()
@@ -54,17 +51,18 @@ class MonitoringResource extends Resource
                         $set('_box_quantity', null);
                         $set('_box_date', null);
                         $set('componentReplacements', []);
+
                         return;
                     }
 
                     $service = app(MonitoringService::class);
-                    $item    = $service->findBoxFromQr($state);
+                    $item = $service->findBoxFromQr($state);
 
                     if ($item) {
                         $product = $item->productSettlement;
                         $set('movement_product_item_id', $item->id);
                         $set('organization_id', $service->getPlacementOrganizationId($item->product_settlement_id));
-                        $set('_box_product', $product->name . ' — ' . ($product->dimension?->name ?? ''));
+                        $set('_box_product', $product->name.' — '.($product->dimension?->name ?? ''));
                         $set('_box_quantity', rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.'));
                         $set('_box_date', $item->movement->created_at->format('d.m.Y H:i'));
                         $set('componentReplacements', $service->getProductComponentsWithStock($item->product_settlement_id, $item->id));
@@ -121,7 +119,7 @@ class MonitoringResource extends Resource
                         ->label('კომპონენტი')
                         ->relationship('settlementComponent', 'name', fn ($q) => $q?->with('dimension'))
                         ->getOptionLabelFromRecordUsing(
-                            fn (SettlementComponent $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
+                            fn (SettlementComponent $r) => $r->name.' — '.($r->dimension?->name ?? '')
                         )
                         ->searchable()
                         ->preload()
@@ -139,6 +137,38 @@ class MonitoringResource extends Resource
                 ->columns(3)
                 ->addActionLabel('კომპონენტის დამატება')
                 ->reorderable()
+                ->columnSpanFull(),
+
+            // ── ინსპექციის მონაცემები ──────────────────────────────────
+            Section::make('ინსპექციის მონაცემები')
+                ->schema([
+                    TextInput::make('pest_type')
+                        ->label('მავნებლის ტიპი')
+                        ->nullable(),
+
+                    TextInput::make('pest_quantity')
+                        ->label('მავნებლის რაოდენობა')
+                        ->numeric()
+                        ->minValue(0)
+                        ->nullable(),
+
+                    TextInput::make('bait_status')
+                        ->label('სატყუარას მდგომარეობა')
+                        ->nullable(),
+
+                    Textarea::make('action_taken')
+                        ->label('მიღებული ზომა')
+                        ->rows(2)
+                        ->nullable()
+                        ->columnSpanFull(),
+
+                    Textarea::make('inspection_note')
+                        ->label('ინსპექციის შენიშვნა')
+                        ->rows(2)
+                        ->nullable()
+                        ->columnSpanFull(),
+                ])
+                ->columns(2)
                 ->columnSpanFull(),
 
             // ── შენიშვნა ───────────────────────────────────────────────
@@ -189,9 +219,9 @@ class MonitoringResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListMonitorings::route('/'),
+            'index' => Pages\ListMonitorings::route('/'),
             'create' => Pages\CreateMonitoring::route('/create'),
-            'edit'   => Pages\EditMonitoring::route('/{record}/edit'),
+            'edit' => Pages\EditMonitoring::route('/{record}/edit'),
         ];
     }
 }

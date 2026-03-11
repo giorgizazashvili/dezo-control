@@ -60,8 +60,8 @@ class MonitoringService
             return $originalItems->map(function (ProductSettlementItem $item) {
                 return [
                     'settlement_component_id' => $item->settlement_component_id,
-                    'quantity'                => null,
-                    '_stock'                  => rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.') ?: '0',
+                    'quantity' => null,
+                    '_stock' => rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.') ?: '0',
                 ];
             })->all();
         }
@@ -81,23 +81,23 @@ class MonitoringService
                 // ამ ტიპის კომპონენტი ჩაანაცვლეს — ისევ იგივე ტიპია
                 $result[] = [
                     'settlement_component_id' => $origId,
-                    'quantity'                => null,
-                    '_stock'                  => rtrim(rtrim(number_format((float) $original->quantity, 4, '.', ''), '0'), '.') ?: '0',
+                    'quantity' => null,
+                    '_stock' => rtrim(rtrim(number_format((float) $original->quantity, 4, '.', ''), '0'), '.') ?: '0',
                 ];
             } elseif ($newTypeIndex < $newTypes->count()) {
                 // ეს slot-ი ახალი ტიპის კომპონენტმა დაიკავა — ნორმა ორიგინალიდან
                 $newId = $newTypes[$newTypeIndex++]->settlement_component_id;
                 $result[] = [
                     'settlement_component_id' => $newId,
-                    'quantity'                => null,
-                    '_stock'                  => rtrim(rtrim(number_format((float) $original->quantity, 4, '.', ''), '0'), '.') ?: '0',
+                    'quantity' => null,
+                    '_stock' => rtrim(rtrim(number_format((float) $original->quantity, 4, '.', ''), '0'), '.') ?: '0',
                 ];
             } else {
                 // ამ ორიგინალს არ შეხებიათ — ნორმა
                 $result[] = [
                     'settlement_component_id' => $origId,
-                    'quantity'                => null,
-                    '_stock'                  => rtrim(rtrim(number_format((float) $original->quantity, 4, '.', ''), '0'), '.') ?: '0',
+                    'quantity' => null,
+                    '_stock' => rtrim(rtrim(number_format((float) $original->quantity, 4, '.', ''), '0'), '.') ?: '0',
                 ];
             }
         }
@@ -107,8 +107,8 @@ class MonitoringService
             $newId = $newTypes[$newTypeIndex++]->settlement_component_id;
             $result[] = [
                 'settlement_component_id' => $newId,
-                'quantity'                => null,
-                '_stock'                  => '0',
+                'quantity' => null,
+                '_stock' => '0',
             ];
         }
 
@@ -152,6 +152,7 @@ class MonitoringService
 
         if (empty($required)) {
             $this->writeLog($monitoring, []);
+
             return;
         }
 
@@ -187,11 +188,11 @@ class MonitoringService
             $available = $this->movementService->getComponentStock($componentId);
 
             if ($available < $neededQty) {
-                $component   = SettlementComponent::with('dimension')->find($componentId);
+                $component = SettlementComponent::with('dimension')->find($componentId);
                 $shortages[] = [
                     'component' => $component->name,
                     'dimension' => $component->dimension?->name ?? '',
-                    'needed'    => round($neededQty, 4),
+                    'needed' => round($neededQty, 4),
                     'available' => round($available, 4),
                 ];
             }
@@ -202,23 +203,50 @@ class MonitoringService
         }
     }
 
+    private function getPlacementItem(int $productSettlementId): ?MovementProductPlacementItem
+    {
+        return MovementProductPlacementItem::query()
+            ->where('product_settlement_id', $productSettlementId)
+            ->whereHas('movement', fn ($q) => $q->where('operation_type', Movement::OPERATION_PRODUCT_PLACEMENT))
+            ->latest('id')
+            ->first();
+    }
+
     private function writeLog(Monitoring $monitoring, array $required): void
     {
+        $monitoring->loadMissing('movementProductItem.productSettlement');
+
+        $placementItem = $monitoring->movementProductItem
+            ? $this->getPlacementItem($monitoring->movementProductItem->product_settlement_id)
+            : null;
+
         $base = [
-            'monitoring_id'            => $monitoring->id,
-            'organization_id'          => $monitoring->organization_id,
+            'monitoring_id' => $monitoring->id,
+            'user_id' => auth()->id(),
+            'organization_id' => $monitoring->organization_id,
             'movement_product_item_id' => $monitoring->movement_product_item_id,
-            'notes'                    => $monitoring->notes,
+            'notes' => $monitoring->notes,
+            'unique_code' => $placementItem?->unique_code,
+            'zone' => $placementItem?->zone,
+            'location' => $placementItem?->location,
+            'pest_type' => $monitoring->pest_type,
+            'pest_quantity' => $monitoring->pest_quantity,
+            'bait_status' => $monitoring->bait_status,
+            'action_taken' => $monitoring->action_taken,
+            'inspection_note' => $monitoring->inspection_note,
         ];
 
         if (empty($required)) {
-            MonitoringLog::create(array_merge($base, ['type' => 'inspection']));
+            MonitoringLog::create(array_merge($base, [
+                'type' => 'inspection',
+                'inspection_status' => 'შემოწმდა',
+            ]));
+
             return;
         }
 
-        $monitoring->load('movementProductItem');
         $movementProductItemId = $monitoring->movement_product_item_id;
-        $productSettlementId   = $monitoring->movementProductItem->product_settlement_id;
+        $productSettlementId = $monitoring->movementProductItem->product_settlement_id;
 
         // ბოქსის წინა მდგომარეობა (ამ მონიტორინგამდე რა კომპონენტები იყო)
         $previousMonitoringId = MonitoringComponentReplacement::query()
@@ -238,7 +266,7 @@ class MonitoringService
         }
 
         // ახალი ტიპები (required-ში არიან, წინა მდგომარეობაში — არა)
-        $newTypeIds           = array_values(array_diff(array_keys($required), $previousIds));
+        $newTypeIds = array_values(array_diff(array_keys($required), $previousIds));
         // წინა კომპონენტები, რომლებიც required-ში არ მოხვდნენ (ამათი slot-ები ახლებმა დაიკავეს)
         $uncoveredPreviousIds = array_values(array_diff($previousIds, array_keys($required)));
 
@@ -250,11 +278,11 @@ class MonitoringService
 
         foreach ($required as $componentId => $qty) {
             MonitoringLog::create(array_merge($base, [
-                'type'                             => 'replacement',
-                'settlement_component_id'          => $componentId,
+                'type' => 'replacement',
+                'settlement_component_id' => $componentId,
                 // თუ სხვა ტიპით ჩანაცვლება — substitutionMap, თუ იგივე ტიპი — $componentId (a→a)
                 'replaced_settlement_component_id' => $substitutionMap[$componentId] ?? $componentId,
-                'quantity'                         => $qty,
+                'quantity' => $qty,
             ]));
         }
     }
@@ -262,15 +290,15 @@ class MonitoringService
     private function createMonitoringConsumption(Monitoring $monitoring, array $required): void
     {
         $consumption = Movement::create([
-            'operation_type'      => Movement::OPERATION_COMPONENT_CONSUMPTION,
+            'operation_type' => Movement::OPERATION_COMPONENT_CONSUMPTION,
             'source_monitoring_id' => $monitoring->id,
         ]);
 
         foreach ($required as $componentId => $qty) {
             MovementComponentItem::create([
-                'movement_id'             => $consumption->id,
+                'movement_id' => $consumption->id,
                 'settlement_component_id' => $componentId,
-                'quantity'                => $qty,
+                'quantity' => $qty,
             ]);
         }
     }
