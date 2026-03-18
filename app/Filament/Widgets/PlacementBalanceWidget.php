@@ -12,8 +12,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
@@ -25,12 +23,12 @@ class PlacementBalanceWidget extends TableWidget
 
     protected static ?int $sort = 3;
 
-    protected function getTableQuery(): Builder
+    private function fetchRecords(array $filters = []): array
     {
-        return Organization::query()
+        $query = DB::table('organizations')
             ->select([
-                'organizations.id',
-                DB::raw('CONCAT(organizations.id, "_", product_settlements.id) as row_key'),
+                DB::raw('CONCAT(organizations.id, "_", product_settlements.id) as `key`'),
+                'organizations.id as organization_id',
                 'organizations.name as organization_name',
                 'product_settlements.id as product_settlement_id',
                 'product_settlements.name as product_name',
@@ -42,42 +40,44 @@ class PlacementBalanceWidget extends TableWidget
             ->join('product_settlements', 'product_settlements.id', '=', 'mppi.product_settlement_id')
             ->leftJoin('dimensions', 'dimensions.id', '=', 'product_settlements.dimension_id')
             ->where('movements.operation_type', Movement::OPERATION_PRODUCT_PLACEMENT)
-            ->groupBy(
-                'organizations.id',
-                'organizations.name',
-                'product_settlements.id',
-                'product_settlements.name',
-            );
-    }
+            ->groupBy('organizations.id', 'organizations.name', 'product_settlements.id', 'product_settlements.name')
+            ->orderBy('organizations.name');
 
-    public function getTableRecordKey(Model | array $record): string
-    {
-        return (string) $record->row_key;
+        if ($orgId = $filters['organization']['organization_id'] ?? null) {
+            $query->where('organizations.id', $orgId);
+        }
+
+        if ($productId = $filters['product']['product_settlement_id'] ?? null) {
+            $query->where('product_settlements.id', $productId);
+        }
+
+        $records = [];
+
+        foreach ($query->get() as $row) {
+            $records[$row->key] = (array) $row;
+        }
+
+        return $records;
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->query($this->getTableQuery())
+            ->records(fn (array $filters): array => $this->fetchRecords($filters))
             ->heading(static::$heading)
             ->columns([
                 TextColumn::make('organization_name')
-                    ->label('ორგანიზაცია')
-                    ->searchable()
-                    ->sortable(),
+                    ->label('ორგანიზაცია'),
 
                 TextColumn::make('product_name')
-                    ->label('პროდუქტი')
-                    ->searchable()
-                    ->sortable(),
+                    ->label('პროდუქტი'),
 
                 TextColumn::make('dimension_name')
                     ->label('განზომილება'),
 
                 TextColumn::make('total_quantity')
                     ->label('რაოდენობა')
-                    ->numeric(decimalPlaces: 2)
-                    ->sortable(),
+                    ->numeric(decimalPlaces: 2),
             ])
             ->actions([
                 Action::make('qrCodes')
@@ -85,8 +85,8 @@ class PlacementBalanceWidget extends TableWidget
                     ->icon('heroicon-o-qr-code')
                     ->color('info')
                     ->modalHeading('QR კოდები')
-                    ->modalContent(fn ($record): HtmlString => new HtmlString(
-                        $this->buildQrModalHtml((int) $record->product_settlement_id)
+                    ->modalContent(fn (array $record): HtmlString => new HtmlString(
+                        $this->buildQrModalHtml((int) $record['product_settlement_id'])
                     ))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('დახურვა'),
@@ -98,11 +98,7 @@ class PlacementBalanceWidget extends TableWidget
                             ->label('ობიექტი')
                             ->options(Organization::pluck('name', 'id'))
                             ->searchable(),
-                    ])
-                    ->query(fn ($query, array $data) => $query->when(
-                        $data['organization_id'] ?? null,
-                        fn ($q) => $q->where('organizations.id', $data['organization_id'])
-                    )),
+                    ]),
 
                 Filter::make('product')
                     ->form([
@@ -110,13 +106,8 @@ class PlacementBalanceWidget extends TableWidget
                             ->label('პროდუქტი')
                             ->options(ProductSettlement::pluck('name', 'id'))
                             ->searchable(),
-                    ])
-                    ->query(fn ($query, array $data) => $query->when(
-                        $data['product_settlement_id'] ?? null,
-                        fn ($q) => $q->where('product_settlements.id', $data['product_settlement_id'])
-                    )),
+                    ]),
             ])
-            ->defaultSort('organization_name')
             ->paginated(false);
     }
 
