@@ -13,6 +13,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 
@@ -29,6 +30,7 @@ class PlacementBalanceWidget extends TableWidget
         return Organization::query()
             ->select([
                 'organizations.id',
+                DB::raw('CONCAT(organizations.id, "_", product_settlements.id) as row_key'),
                 'organizations.name as organization_name',
                 'product_settlements.id as product_settlement_id',
                 'product_settlements.name as product_name',
@@ -46,6 +48,11 @@ class PlacementBalanceWidget extends TableWidget
                 'product_settlements.id',
                 'product_settlements.name',
             );
+    }
+
+    public function getTableRecordKey(Model | array $record): string
+    {
+        return (string) $record->row_key;
     }
 
     public function table(Table $table): Table
