@@ -48,7 +48,7 @@ class ProductBalanceWidget extends TableWidget
                     as total_quantity
                 "),
             ])
-            ->groupBy('product_settlements.id', 'product_settlements.name');
+            ->groupBy('product_settlements.id', 'product_settlements.name', 'product_settlements.dimension_id');
     }
 
     public function table(Table $table): Table
