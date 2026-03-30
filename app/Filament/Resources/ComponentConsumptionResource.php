@@ -26,6 +26,8 @@ class ComponentConsumptionResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-trending-down';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'განთ / გახარჯვა';
+
     protected static ?string $navigationLabel = 'კომპონენტის გახარჯვა';
 
     protected static ?string $slug = 'component-consumptions';

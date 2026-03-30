@@ -18,6 +18,8 @@ class MonitoringLogResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'რეპორტები';
+
     protected static ?string $navigationLabel = 'მონიტორინგის ლოგი';
 
     protected static ?string $modelLabel = 'ლოგი';

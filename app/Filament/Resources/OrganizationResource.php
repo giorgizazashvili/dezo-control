@@ -20,6 +20,8 @@ class OrganizationResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'ცნობარები';
+
     protected static ?string $navigationLabel = 'ორგანიზაციები';
 
     protected static ?int $navigationSort = 3;

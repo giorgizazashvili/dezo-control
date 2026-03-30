@@ -25,6 +25,8 @@ class ProductReceiptResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-arrow-down';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'პროდუქტის მიღებები';
+
     protected static ?string $navigationLabel = 'პროდუქტის მიღება';
 
     protected static ?string $slug = 'product-receipts';

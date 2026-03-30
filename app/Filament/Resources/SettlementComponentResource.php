@@ -20,6 +20,8 @@ class SettlementComponentResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'ცნობარები';
+
     protected static ?string $navigationLabel = 'კომპონენტების დას.';
 
     protected static ?int $navigationSort = 1;

@@ -11,6 +11,8 @@ class StockReport extends Page
 {
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'რეპორტები';
+
     protected static ?string $navigationLabel = 'ნაშთების რეპორტი';
 
     protected static ?string $title = 'ნაშთების რეპორტი';

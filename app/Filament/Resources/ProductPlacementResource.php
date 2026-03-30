@@ -26,6 +26,8 @@ class ProductPlacementResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'განთ / გახარჯვა';
+
     protected static ?string $navigationLabel = 'ობიექტზე განთავსება';
 
     protected static ?string $slug = 'product-placements';

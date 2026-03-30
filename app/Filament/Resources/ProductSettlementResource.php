@@ -23,6 +23,8 @@ class ProductSettlementResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'ცნობარები';
+
     protected static ?string $navigationLabel = 'პროდუქტების დას.';
 
     protected static ?int $navigationSort = 2;
