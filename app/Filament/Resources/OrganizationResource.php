@@ -66,12 +66,6 @@ class OrganizationResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('legal_form')
-                    ->label('იურიდიული ფორმა')
-                    ->formatStateUsing(fn (string $state) => Organization::legalForms()[$state] ?? $state)
-                    ->searchable()
-                    ->sortable(),
-
                 TextColumn::make('name')
                     ->label('დასახელება')
                     ->searchable()
@@ -85,6 +79,12 @@ class OrganizationResource extends Resource
                     ->label('მისამართი')
                     ->searchable()
                     ->toggleable(),
+
+                TextColumn::make('legal_form')
+                    ->label('იურიდიული ფორმა')
+                    ->formatStateUsing(fn(string $state) => Organization::legalForms()[$state] ?? $state)
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('director')
                     ->label('დირექტორი')
@@ -116,9 +116,9 @@ class OrganizationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListOrganizations::route('/'),
+            'index' => Pages\ListOrganizations::route('/'),
             'create' => Pages\CreateOrganization::route('/create'),
-            'edit'   => Pages\EditOrganization::route('/{record}/edit'),
+            'edit' => Pages\EditOrganization::route('/{record}/edit'),
         ];
     }
 }
