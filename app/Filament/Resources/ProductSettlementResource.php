@@ -15,7 +15,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 
 class ProductSettlementResource extends Resource
 {
@@ -67,7 +66,7 @@ class ProductSettlementResource extends Resource
                             SettlementComponent::with('dimension')
                                 ->get()
                                 ->mapWithKeys(fn (SettlementComponent $c) => [
-                                    $c->id => $c->name . ' — ' . ($c->dimension?->name ?? ''),
+                                    $c->id => $c->name.' — '.($c->dimension?->name ?? ''),
                                 ])
                         )
                         ->searchable()
@@ -83,6 +82,7 @@ class ProductSettlementResource extends Resource
                 ])
                 ->columns(3)
                 ->addActionLabel('კომპონენტის დამატება')
+                ->defaultItems(0)
                 ->reorderable()
                 ->columnSpanFull(),
         ]);
@@ -122,9 +122,9 @@ class ProductSettlementResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProductSettlements::route('/'),
+            'index' => Pages\ListProductSettlements::route('/'),
             'create' => Pages\CreateProductSettlement::route('/create'),
-            'edit'   => Pages\EditProductSettlement::route('/{record}/edit'),
+            'edit' => Pages\EditProductSettlement::route('/{record}/edit'),
         ];
     }
 }
