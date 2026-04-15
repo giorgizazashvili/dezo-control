@@ -6,9 +6,10 @@ use App\Filament\Resources\ProductReceiptResource\Pages;
 use App\Models\Dimension;
 use App\Models\Movement;
 use App\Models\ProductSettlement;
-use App\Services\MovementService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -16,7 +17,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
 
 class ProductReceiptResource extends Resource
@@ -53,7 +53,7 @@ class ProductReceiptResource extends Resource
                         ->label('პროდუქტი')
                         ->relationship('productSettlement', 'name', fn ($q) => $q?->with('dimension'))
                         ->getOptionLabelFromRecordUsing(
-                            fn (ProductSettlement $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
+                            fn (ProductSettlement $r) => $r->name.' — '.($r->dimension?->name ?? '')
                         )
                         ->searchable()
                         ->preload()
@@ -89,8 +89,12 @@ class ProductReceiptResource extends Resource
                         ->required()
                         ->minValue(0)
                         ->columnSpan(1),
+
+                    Checkbox::make('is_my_property')
+                        ->label('ჩემი საკუთრება')
+                        ->columnSpan(1),
                 ])
-                ->columns(3)
+                ->columns(4)
                 ->addActionLabel('პროდუქტის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),
@@ -142,9 +146,9 @@ class ProductReceiptResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProductReceipts::route('/'),
+            'index' => Pages\ListProductReceipts::route('/'),
             'create' => Pages\CreateProductReceipt::route('/create'),
-            'edit'   => Pages\EditProductReceipt::route('/{record}/edit'),
+            'edit' => Pages\EditProductReceipt::route('/{record}/edit'),
         ];
     }
 }

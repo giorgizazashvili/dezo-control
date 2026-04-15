@@ -12,12 +12,14 @@ class MovementProductItem extends Model
         'movement_id',
         'product_settlement_id',
         'quantity',
+        'is_my_property',
         'qr_code',
         'uuid',
     ];
 
     protected $casts = [
         'quantity' => 'decimal:4',
+        'is_my_property' => 'boolean',
     ];
 
     protected static function booted(): void
