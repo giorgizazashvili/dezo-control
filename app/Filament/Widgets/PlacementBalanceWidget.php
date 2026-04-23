@@ -88,6 +88,14 @@ class PlacementBalanceWidget extends TableWidget
                     ->modalContent(fn (array $record): HtmlString => new HtmlString(
                         $this->buildQrModalHtml((int) $record['product_settlement_id'])
                     ))
+                    ->extraModalFooterActions(fn (array $record): array => [
+                        Action::make('print')
+                            ->label('ბეჭდვა')
+                            ->icon('heroicon-o-printer')
+                            ->color('primary')
+                            ->url(route('print.qr', $record['product_settlement_id']))
+                            ->openUrlInNewTab(),
+                    ])
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('დახურვა'),
             ])
@@ -123,25 +131,18 @@ class PlacementBalanceWidget extends TableWidget
             return '<p class="text-center text-gray-500 py-4">QR კოდები არ მოიძებნა.</p>';
         }
 
-        $product   = $item->productSettlement;
+        $product = $item->productSettlement;
         $dimension = $product->dimension?->name ?? '';
-        $quantity  = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
+        $quantity = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
+        $qtyLine = $quantity.($dimension ? ' '.$dimension : '');
 
         $html = '<div style="display:flex;justify-content:center;padding:16px;">';
         $html .= '<div style="text-align:center;border:1px solid #e5e7eb;border-radius:12px;padding:16px;min-width:200px;">';
-        $html .= '<div style="width:180px;height:180px;margin:0 auto;">' . $item->qr_code . '</div>';
-        $html .= '<p style="margin-top:8px;font-weight:600;font-size:14px;">' . e($product->name) . '</p>';
-        $html .= '<p style="color:#6b7280;font-size:13px;">' . e($quantity) . ' ' . e($dimension) . '</p>';
+        $html .= '<div style="width:180px;height:180px;margin:0 auto;">'.$item->qr_code.'</div>';
+        $html .= '<p style="margin-top:8px;font-weight:600;font-size:14px;">'.e($product->name).'</p>';
+        $html .= '<p style="color:#6b7280;font-size:13px;">'.e($qtyLine).'</p>';
         $html .= '</div>';
         $html .= '</div>';
-
-        $html .= '
-        <div style="text-align:center;margin-top:12px;">
-            <button onclick="window.print()"
-                style="background:#3b82f6;color:#fff;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:14px;">
-                ბეჭდვა
-            </button>
-        </div>';
 
         return $html;
     }
