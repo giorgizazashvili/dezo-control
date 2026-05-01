@@ -22,13 +22,24 @@ class MonitoringService
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * სკანირებული UUID-იდან MovementProductItem-ის პოვნა.
+     * სკანირებული UUID ან უნიკალური კოდიდან MovementProductItem-ის პოვნა.
      */
-    public function findBoxFromQr(string $uuid): ?MovementProductItem
+    public function findBoxFromQr(string $input): ?MovementProductItem
     {
+        $input = trim($input);
+
+        $productSettlementIds = MovementProductPlacementItem::query()
+            ->where('unique_code', $input)
+            ->whereHas('movement', fn ($q) => $q->where('operation_type', Movement::OPERATION_PRODUCT_PLACEMENT))
+            ->pluck('product_settlement_id');
+
         return MovementProductItem::query()
-            ->where('uuid', trim($uuid))
+            ->where(function ($q) use ($input, $productSettlementIds) {
+                $q->where('uuid', $input)
+                    ->orWhereIn('product_settlement_id', $productSettlementIds);
+            })
             ->with(['productSettlement.dimension', 'movement'])
+            ->latest('id')
             ->first();
     }
 
