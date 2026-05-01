@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Enums\Role;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -24,6 +25,16 @@ class UsersTable
                     ->label('ელ-ფოსტა')
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('role')
+                    ->label('როლი')
+                    ->badge()
+                    ->formatStateUsing(fn (Role $state) => $state->label())
+                    ->color(fn (Role $state) => match ($state) {
+                        Role::Admin => 'danger',
+                        Role::OfficeManager => 'warning',
+                        Role::Technician => 'success',
+                    }),
 
                 TextColumn::make('created_at')
                     ->label('შექმნილია')

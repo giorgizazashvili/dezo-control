@@ -3,11 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ComponentReceiptResource\Pages;
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Models\Dimension;
 use App\Models\Movement;
 use App\Models\SettlementComponent;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -15,11 +17,12 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
 
 class ComponentReceiptResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = Movement::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-down-tray';
@@ -52,7 +55,7 @@ class ComponentReceiptResource extends Resource
                         ->label('კომპონენტი')
                         ->relationship('settlementComponent', 'name', fn ($q) => $q?->with('dimension'))
                         ->getOptionLabelFromRecordUsing(
-                            fn (SettlementComponent $r) => $r->name . ' — ' . ($r->dimension?->name ?? '')
+                            fn (SettlementComponent $r) => $r->name.' — '.($r->dimension?->name ?? '')
                         )
                         ->searchable()
                         ->preload()
@@ -141,9 +144,9 @@ class ComponentReceiptResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListComponentReceipts::route('/'),
+            'index' => Pages\ListComponentReceipts::route('/'),
             'create' => Pages\CreateComponentReceipt::route('/create'),
-            'edit'   => Pages\EditComponentReceipt::route('/{record}/edit'),
+            'edit' => Pages\EditComponentReceipt::route('/{record}/edit'),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\MonitoringLogResource\Pages;
 use App\Models\MonitoringLog;
 use Filament\Forms\Components\DatePicker;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class MonitoringLogResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = MonitoringLog::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';

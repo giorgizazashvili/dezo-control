@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\ProductSettlementResource\Pages;
 use App\Models\Dimension;
 use App\Models\ProductSettlement;
@@ -18,6 +19,8 @@ use Filament\Tables\Table;
 
 class ProductSettlementResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = ProductSettlement::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';

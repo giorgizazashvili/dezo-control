@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\SettlementComponentResource\Pages;
 use App\Models\Dimension;
 use App\Models\SettlementComponent;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class SettlementComponentResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = SettlementComponent::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
@@ -92,9 +95,9 @@ class SettlementComponentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListSettlementComponents::route('/'),
+            'index' => Pages\ListSettlementComponents::route('/'),
             'create' => Pages\CreateSettlementComponent::route('/create'),
-            'edit'   => Pages\EditSettlementComponent::route('/{record}/edit'),
+            'edit' => Pages\EditSettlementComponent::route('/{record}/edit'),
         ];
     }
 }

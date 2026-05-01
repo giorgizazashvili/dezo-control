@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\Role;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -30,6 +32,12 @@ class UserForm
                     ->dehydrated(fn (?string $state) => filled($state))
                     ->required(fn (string $operation) => $operation === 'create')
                     ->maxLength(255),
+
+                Select::make('role')
+                    ->label('როლი')
+                    ->options(collect(Role::cases())->mapWithKeys(fn (Role $r) => [$r->value => $r->label()]))
+                    ->required()
+                    ->default(Role::Technician->value),
             ]);
     }
 }

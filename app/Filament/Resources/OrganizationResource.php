@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\OrganizationResource\Pages;
 use App\Models\Organization;
 use Filament\Actions\DeleteAction;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class OrganizationResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = Organization::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
@@ -82,7 +85,7 @@ class OrganizationResource extends Resource
 
                 TextColumn::make('legal_form')
                     ->label('იურიდიული ფორმა')
-                    ->formatStateUsing(fn(string $state) => Organization::legalForms()[$state] ?? $state)
+                    ->formatStateUsing(fn (string $state) => Organization::legalForms()[$state] ?? $state)
                     ->searchable()
                     ->sortable(),
 

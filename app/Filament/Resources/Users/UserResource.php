@@ -26,6 +26,11 @@ class UserResource extends Resource
 
     protected static ?string $pluralModelLabel = 'მომხმარებლები';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return UserForm::configure($schema);

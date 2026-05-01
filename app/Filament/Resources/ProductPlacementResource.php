@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\ProductPlacementResource\Pages;
 use App\Models\Movement;
 use App\Models\ProductSettlement;
@@ -22,6 +23,8 @@ use Filament\Tables\Table;
 
 class ProductPlacementResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = Movement::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';

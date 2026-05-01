@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ComponentConsumptionResource\Pages;
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Models\Dimension;
 use App\Models\Movement;
 use App\Models\SettlementComponent;
 use App\Services\MovementService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -17,11 +19,12 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Table;
 
 class ComponentConsumptionResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = Movement::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-trending-down';
@@ -64,10 +67,10 @@ class ComponentConsumptionResource extends Resource
                         ->label('კომპონენტი')
                         ->relationship('settlementComponent', 'name', fn ($q) => $q?->with('dimension'))
                         ->getOptionLabelFromRecordUsing(function (SettlementComponent $r) {
-                            $stock    = app(MovementService::class)->getComponentStock($r->id);
+                            $stock = app(MovementService::class)->getComponentStock($r->id);
                             $stockStr = rtrim(rtrim(number_format($stock, 4, '.', ''), '0'), '.') ?: '0';
 
-                            return $r->name . ' — ' . ($r->dimension?->name ?? '') . ' | ნაშთი: ' . $stockStr;
+                            return $r->name.' — '.($r->dimension?->name ?? '').' | ნაშთი: '.$stockStr;
                         })
                         ->searchable()
                         ->preload()
@@ -167,9 +170,9 @@ class ComponentConsumptionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListComponentConsumptions::route('/'),
+            'index' => Pages\ListComponentConsumptions::route('/'),
             'create' => Pages\CreateComponentConsumption::route('/create'),
-            'edit'   => Pages\EditComponentConsumption::route('/{record}/edit'),
+            'edit' => Pages\EditComponentConsumption::route('/{record}/edit'),
         ];
     }
 }

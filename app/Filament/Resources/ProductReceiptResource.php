@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\ProductReceiptResource\Pages;
 use App\Models\Dimension;
 use App\Models\Movement;
@@ -21,6 +22,8 @@ use Filament\Tables\Table;
 
 class ProductReceiptResource extends Resource
 {
+    use RestrictedToOfficeManager;
+
     protected static ?string $model = Movement::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-arrow-down';

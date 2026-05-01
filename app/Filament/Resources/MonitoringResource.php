@@ -36,6 +36,11 @@ class MonitoringResource extends Resource
 
     protected static ?int $navigationSort = 9;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->check();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
