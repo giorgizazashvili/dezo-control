@@ -88,6 +88,13 @@ class MonitoringResource extends Resource
                 ->required()
                 ->columnSpanFull(),
 
+            // ── ტექნიკოსი ──────────────────────────────────────────────
+            TextInput::make('technician')
+                ->label('ტექნიკოსი')
+                ->default(fn () => auth()->user()?->name)
+                ->required()
+                ->columnSpanFull(),
+
             // ── ბოქსის მონაცემები (ავტო-შევსება) ─────────────────────
             TextInput::make('_box_product')
                 ->label('პროდუქტი')

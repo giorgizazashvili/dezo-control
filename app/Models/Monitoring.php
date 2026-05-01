@@ -10,6 +10,7 @@ class Monitoring extends Model
 {
     protected $fillable = [
         'organization_id',
+        'technician',
         'movement_product_item_id',
         'qr_data',
         'notes',
