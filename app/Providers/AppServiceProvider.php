@@ -29,5 +29,23 @@ class AppServiceProvider extends ServiceProvider
             PanelsRenderHook::SIDEBAR_FOOTER,
             fn (): string => view('filament.footer')->render(),
         );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+            fn (): string => view('filament.login-header')->render(),
+        );
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::STYLES_AFTER,
+            fn (): string => '<style>
+                .fi-simple-layout {
+                    min-height: 100vh;
+                    background-color: #f3f4f6;
+                    background-image:
+                        radial-gradient(ellipse at 0% 0%, rgba(204,0,0,0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 100% 100%, rgba(204,0,0,0.04) 0%, transparent 50%);
+                }
+            </style>',
+        );
     }
 }
