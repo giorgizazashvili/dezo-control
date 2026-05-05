@@ -6,8 +6,10 @@ use App\Filament\Resources\MonitoringResource\Pages;
 use App\Models\Monitoring;
 use App\Models\SettlementComponent;
 use App\Services\MonitoringService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -99,6 +101,17 @@ class MonitoringResource extends Resource
                 ->default(fn () => auth()->user()?->name)
                 ->required()
                 ->columnSpanFull(),
+
+            // ── დაწყება / დასრულება ────────────────────────────────────
+            DateTimePicker::make('started_at')
+                ->label('დაწყების დრო')
+                ->seconds(false)
+                ->nullable(),
+
+            DateTimePicker::make('finished_at')
+                ->label('დასრულების დრო')
+                ->seconds(false)
+                ->nullable(),
 
             // ── ბოქსის მონაცემები (ავტო-შევსება) ─────────────────────
             TextInput::make('_box_product')
@@ -218,6 +231,12 @@ class MonitoringResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
+                Action::make('print')
+                    ->label('რეპორტი')
+                    ->icon('heroicon-o-printer')
+                    ->color('gray')
+                    ->url(fn (Monitoring $record) => route('print.service-report', $record))
+                    ->openUrlInNewTab(),
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()->label('წაშლა'),
             ])

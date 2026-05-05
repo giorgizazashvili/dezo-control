@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,5 +24,10 @@ class AppServiceProvider extends ServiceProvider
     {
         URL::forceScheme('https');
         $this->app['request']->server->set('HTTPS', 'on');
+
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::SIDEBAR_FOOTER,
+            fn (): string => view('filament.footer')->render(),
+        );
     }
 }

@@ -11,6 +11,8 @@ class Monitoring extends Model
     protected $fillable = [
         'organization_id',
         'technician',
+        'started_at',
+        'finished_at',
         'movement_product_item_id',
         'qr_data',
         'notes',
@@ -20,6 +22,14 @@ class Monitoring extends Model
         'action_taken',
         'inspection_note',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'started_at' => 'datetime',
+            'finished_at' => 'datetime',
+        ];
+    }
 
     public function organization(): BelongsTo
     {
