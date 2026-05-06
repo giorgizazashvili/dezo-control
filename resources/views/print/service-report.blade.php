@@ -126,6 +126,12 @@
     }
   </style>
 </head>
+@php
+    $logoPath = public_path('images/logo.jpeg');
+    $logoSrc = file_exists($logoPath)
+        ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoPath))
+        : '';
+@endphp
 <body>
 <div class="page">
 
@@ -140,7 +146,9 @@
         <div>თბილისი, მ. მამარდაშვილის 32</div>
       </td>
       <td class="logo-td">
-        <img src="{{ asset('images/logo.jpeg') }}" alt="DEZO SERVICE" style="max-width:140px; max-height:80px; object-fit:contain;">
+        @if($logoSrc)
+          <img src="{{ $logoSrc }}" alt="DEZO SERVICE" style="max-width:140px; max-height:80px; object-fit:contain;">
+        @endif
       </td>
       <td style="width:35%">
         <div style="font-weight:bold; margin-bottom:3px">მომსახურების მიმღები:</div>

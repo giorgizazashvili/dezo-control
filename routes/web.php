@@ -27,7 +27,12 @@ Route::get('/print/service-report/{monitoring}', function (\App\Models\Monitorin
         fn ($log) => $log->pest_type || $log->pest_quantity > 0
     );
 
-    return view('print.service-report', compact('monitoring', 'deviceSummary', 'pestLogs'));
+    $filename = 'service-report-'.$monitoring->id.'.pdf';
+
+    return \Spatie\LaravelPdf\Facades\Pdf::view('print.service-report', compact('monitoring', 'deviceSummary', 'pestLogs'))
+        ->format('a4')
+        ->name($filename)
+        ->inline();
 })->name('print.service-report');
 
 Route::get('/export/monitoring-report', function () {
