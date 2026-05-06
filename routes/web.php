@@ -39,6 +39,18 @@ Route::get('/export/monitoring-report', function () {
     );
 })->name('export.monitoring-report');
 
+Route::get('/export/unscanned-devices-report', function (\Illuminate\Http\Request $request) {
+    $filename = 'unscanned-devices-report-'.now()->format('Y-m-d').'.xlsx';
+
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\UnscannedDevicesReportExport(
+            organizationId: $request->integer('organization_id') ?: null,
+            unscannedOnly: $request->boolean('unscanned_only', true),
+        ),
+        $filename
+    );
+})->name('export.unscanned-devices-report');
+
 Route::get('/print/qr/{productSettlementId}', function (int $productSettlementId) {
     $item = \App\Models\MovementProductItem::where('product_settlement_id', $productSettlementId)
         ->whereNotNull('qr_code')
