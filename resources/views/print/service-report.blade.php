@@ -140,8 +140,7 @@
         <div>თბილისი, მ. მამარდაშვილის 32</div>
       </td>
       <td class="logo-td">
-        <div class="logo-top">DEZO</div>
-        <div class="logo-bot">SERVICE</div>
+        <img src="{{ asset('images/logo.jpeg') }}" alt="DEZO SERVICE" style="max-width:140px; max-height:80px; object-fit:contain;">
       </td>
       <td style="width:35%">
         <div style="font-weight:bold; margin-bottom:3px">მომსახურების მიმღები:</div>
