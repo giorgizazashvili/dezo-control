@@ -39,6 +39,19 @@ Route::get('/export/monitoring-report', function () {
     );
 })->name('export.monitoring-report');
 
+Route::get('/export/pesticide-report', function (\Illuminate\Http\Request $request) {
+    $filename = 'pesticide-report-'.now()->format('Y-m-d').'.xlsx';
+
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\PesticideReportExport(
+            organizationId: $request->integer('organization_id') ?: null,
+            from: $request->string('from')->toString() ?: null,
+            until: $request->string('until')->toString() ?: null,
+        ),
+        $filename
+    );
+})->name('export.pesticide-report');
+
 Route::get('/export/unscanned-devices-report', function (\Illuminate\Http\Request $request) {
     $filename = 'unscanned-devices-report-'.now()->format('Y-m-d').'.xlsx';
 
