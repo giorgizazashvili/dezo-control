@@ -26,6 +26,7 @@ class MonitoringLog extends Model
         'bait_status',
         'action_taken',
         'inspection_note',
+        'risk_level',
     ];
 
     protected $casts = [

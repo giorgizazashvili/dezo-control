@@ -245,6 +245,7 @@ class MonitoringService
             'bait_status' => $monitoring->bait_status,
             'action_taken' => $monitoring->action_taken,
             'inspection_note' => $monitoring->inspection_note,
+            'risk_level' => $monitoring->risk_level,
         ];
 
         if (empty($required)) {

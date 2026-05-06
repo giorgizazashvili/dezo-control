@@ -30,6 +30,15 @@ Route::get('/print/service-report/{monitoring}', function (\App\Models\Monitorin
     return view('print.service-report', compact('monitoring', 'deviceSummary', 'pestLogs'));
 })->name('print.service-report');
 
+Route::get('/export/monitoring-report', function () {
+    $filename = 'monitoring-report-'.now()->format('Y-m-d').'.xlsx';
+
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\MonitoringReportExport,
+        $filename
+    );
+})->name('export.monitoring-report');
+
 Route::get('/print/qr/{productSettlementId}', function (int $productSettlementId) {
     $item = \App\Models\MovementProductItem::where('product_settlement_id', $productSettlementId)
         ->whereNotNull('qr_code')

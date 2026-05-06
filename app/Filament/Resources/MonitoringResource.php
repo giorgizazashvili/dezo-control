@@ -181,6 +181,10 @@ class MonitoringResource extends Resource
                         ->label('სატყუარას მდგომარეობა')
                         ->nullable(),
 
+                    TextInput::make('risk_level')
+                        ->label('რისკის დონე')
+                        ->nullable(),
+
                     Textarea::make('action_taken')
                         ->label('მიღებული ზომა')
                         ->rows(2)
