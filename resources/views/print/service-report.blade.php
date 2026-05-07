@@ -124,6 +124,36 @@
       margin-bottom: 14px;
       font-size: 11px;
     }
+
+    .signature-row {
+      display: flex;
+      gap: 40px;
+      margin-top: 40px;
+    }
+    .signature-col {
+      flex: 1;
+    }
+    .signature-label {
+      font-weight: bold;
+      margin-bottom: 28px;
+      font-size: 11px;
+    }
+    .signature-line {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .signature-line-lbl {
+      white-space: nowrap;
+      min-width: 80px;
+      font-size: 11px;
+    }
+    .signature-line-underline {
+      flex: 1;
+      border-bottom: 1px solid #000;
+      height: 16px;
+    }
   </style>
 </head>
 @php
@@ -240,6 +270,31 @@
     <div class="sec-title">შენიშვნა</div>
     <div class="notes-block">{{ $monitoring->notes }}</div>
   @endif
+
+  <div class="signature-row">
+    <div class="signature-col">
+      <div class="signature-label">მომსახურების გამწევი:</div>
+      <div class="signature-line">
+        <span class="signature-line-lbl">სახელი/გვარი</span>
+        <span class="signature-line-underline"></span>
+      </div>
+      <div class="signature-line">
+        <span class="signature-line-lbl">ხელმოწერა</span>
+        <span class="signature-line-underline"></span>
+      </div>
+    </div>
+    <div class="signature-col">
+      <div class="signature-label">მომსახურების მიმღები:</div>
+      <div class="signature-line">
+        <span class="signature-line-lbl">სახელი/გვარი</span>
+        <span class="signature-line-underline"></span>
+      </div>
+      <div class="signature-line">
+        <span class="signature-line-lbl">ხელმოწერა</span>
+        <span class="signature-line-underline"></span>
+      </div>
+    </div>
+  </div>
 
 </div>
 </body>
