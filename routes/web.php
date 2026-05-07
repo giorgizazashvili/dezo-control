@@ -69,6 +69,13 @@ Route::get('/export/unscanned-devices-report', function (\Illuminate\Http\Reques
     );
 })->name('export.unscanned-devices-report');
 
+Route::get('/export/product-placement-template', function () {
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new \App\Exports\ProductPlacementTemplateExport,
+        'product-placement-template.xlsx'
+    );
+})->name('export.product-placement-template');
+
 Route::get('/print/qr/{productSettlementId}', function (int $productSettlementId) {
     $item = \App\Models\MovementProductItem::where('product_settlement_id', $productSettlementId)
         ->whereNotNull('qr_code')
