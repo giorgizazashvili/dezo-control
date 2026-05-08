@@ -116,14 +116,14 @@ class ProductSettlementResource extends Resource
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()
                     ->label('წაშლა')
-                    ->before(function (ProductSettlement $record, \Closure $halt): void {
+                    ->before(function (DeleteAction $action, ProductSettlement $record): void {
                         if ($record->movementProductItems()->exists() || $record->movementProductPlacementItems()->exists()) {
                             Notification::make()
                                 ->title('წაშლა შეუძლებელია')
                                 ->body('ეს ჩანაწერი გამოყენებულია და ვერ წაიშლება.')
                                 ->danger()
                                 ->send();
-                            $halt();
+                            $action->halt();
                         }
                     }),
             ])
@@ -131,15 +131,15 @@ class ProductSettlementResource extends Resource
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make()
                         ->label('წაშლა')
-                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, \Closure $halt): void {
-                            $blocked = $records->filter(fn (ProductSettlement $r) => $r->movementProductItems()->exists());
+                        ->before(function (\Filament\Actions\DeleteBulkAction $action, \Illuminate\Database\Eloquent\Collection $records): void {
+                            $blocked = $records->filter(fn (ProductSettlement $r) => $r->movementProductItems()->exists() || $r->movementProductPlacementItems()->exists());
                             if ($blocked->isNotEmpty()) {
                                 Notification::make()
                                     ->title('წაშლა შეუძლებელია')
-                                    ->body('შერჩეული დასახლება(ები) გადაადგილებებში გამოყენებულია და ვერ წაიშლება.')
+                                    ->body('შერჩეული ჩანაწერ(ებ)ი გამოყენებულია და ვერ წაიშლება.')
                                     ->danger()
                                     ->send();
-                                $halt();
+                                $action->halt();
                             }
                         }),
                 ]),

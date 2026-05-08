@@ -86,7 +86,7 @@ class SettlementComponentResource extends Resource
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()
                     ->label('წაშლა')
-                    ->before(function (SettlementComponent $record, \Closure $halt): void {
+                    ->before(function (DeleteAction $action, SettlementComponent $record): void {
                         if (
                             $record->movementProductItems()->exists() ||
                             $record->productSettlementItems()->exists() ||
@@ -97,7 +97,7 @@ class SettlementComponentResource extends Resource
                                 ->body('ეს ჩანაწერი გამოყენებულია და ვერ წაიშლება.')
                                 ->danger()
                                 ->send();
-                            $halt();
+                            $action->halt();
                         }
                     }),
             ])
@@ -105,7 +105,7 @@ class SettlementComponentResource extends Resource
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make()
                         ->label('წაშლა')
-                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, \Closure $halt): void {
+                        ->before(function (\Filament\Actions\DeleteBulkAction $action, \Illuminate\Database\Eloquent\Collection $records): void {
                             $blocked = $records->filter(fn (SettlementComponent $r) => $r->movementProductItems()->exists() ||
                                 $r->productSettlementItems()->exists() ||
                                 $r->monitoringComponentReplacements()->exists()
@@ -116,7 +116,7 @@ class SettlementComponentResource extends Resource
                                     ->body('შერჩეული ჩანაწერ(ებ)ი გამოყენებულია და ვერ წაიშლება.')
                                     ->danger()
                                     ->send();
-                                $halt();
+                                $action->halt();
                             }
                         }),
                 ]),

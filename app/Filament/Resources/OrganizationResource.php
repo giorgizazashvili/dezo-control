@@ -110,14 +110,14 @@ class OrganizationResource extends Resource
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()
                     ->label('წაშლა')
-                    ->before(function (Organization $record, \Closure $halt): void {
+                    ->before(function (DeleteAction $action, Organization $record): void {
                         if ($record->monitorings()->exists() || $record->monitoringLogs()->exists()) {
                             Notification::make()
                                 ->title('წაშლა შეუძლებელია')
                                 ->body('ეს ჩანაწერი გამოყენებულია და ვერ წაიშლება.')
                                 ->danger()
                                 ->send();
-                            $halt();
+                            $action->halt();
                         }
                     }),
             ])
@@ -125,7 +125,7 @@ class OrganizationResource extends Resource
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make()
                         ->label('წაშლა')
-                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, \Closure $halt): void {
+                        ->before(function (\Filament\Actions\DeleteBulkAction $action, \Illuminate\Database\Eloquent\Collection $records): void {
                             $blocked = $records->filter(
                                 fn (Organization $r) => $r->monitorings()->exists() || $r->monitoringLogs()->exists()
                             );
@@ -135,7 +135,7 @@ class OrganizationResource extends Resource
                                     ->body('შერჩეული ჩანაწერ(ებ)ი გამოყენებულია და ვერ წაიშლება.')
                                     ->danger()
                                     ->send();
-                                $halt();
+                                $action->halt();
                             }
                         }),
                 ]),
