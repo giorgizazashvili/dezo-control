@@ -29,10 +29,9 @@ Route::get('/print/service-report/{monitoring}', function (\App\Models\Monitorin
 
     $filename = 'service-report-'.$monitoring->id.'.pdf';
 
-    return \Spatie\LaravelPdf\Facades\Pdf::view('print.service-report', compact('monitoring', 'deviceSummary', 'pestLogs'))
-        ->format('a4')
-        ->name($filename)
-        ->inline();
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('monitoring', 'deviceSummary', 'pestLogs'))
+        ->setPaper('a4')
+        ->stream($filename);
 })->name('print.service-report');
 
 Route::get('/export/monitoring-report', function () {

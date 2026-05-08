@@ -57,21 +57,20 @@
       margin-top: 2px;
     }
 
-    .date-block { padding: 0; }
+    .date-block { padding: 0; width: 100%; border-collapse: collapse; }
     .date-item {
-      display: flex;
-      align-items: center;
       padding: 3px 0;
       border-bottom: 1px solid #ddd;
     }
     .date-item:last-child { border-bottom: none; }
-    .date-lbl { min-width: 135px; }
+    .date-lbl { display: inline-block; min-width: 135px; vertical-align: bottom; }
     .date-val {
-      flex: 1;
+      display: inline-block;
+      width: 120px;
       border-bottom: 1px solid #888;
       height: 16px;
-      margin-right: 5px;
       padding: 0 3px;
+      vertical-align: bottom;
     }
 
     .svc-desc {
@@ -80,8 +79,6 @@
     }
 
     .meta-row {
-      display: flex;
-      gap: 20px;
       padding: 4px 2px;
       margin-bottom: 10px;
       font-size: 11px;
@@ -126,12 +123,14 @@
     }
 
     .signature-row {
-      display: flex;
-      gap: 40px;
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 40px;
     }
     .signature-col {
-      flex: 1;
+      width: 50%;
+      padding-right: 20px;
+      vertical-align: top;
     }
     .signature-label {
       font-weight: bold;
@@ -139,20 +138,21 @@
       font-size: 11px;
     }
     .signature-line {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
       margin-bottom: 10px;
     }
     .signature-line-lbl {
+      display: inline-block;
       white-space: nowrap;
-      min-width: 80px;
+      width: 80px;
       font-size: 11px;
+      vertical-align: bottom;
     }
     .signature-line-underline {
-      flex: 1;
+      display: inline-block;
+      width: 200px;
       border-bottom: 1px solid #000;
       height: 16px;
+      vertical-align: bottom;
     }
   </style>
 </head>
@@ -271,30 +271,32 @@
     <div class="notes-block">{{ $monitoring->notes }}</div>
   @endif
 
-  <div class="signature-row">
-    <div class="signature-col">
-      <div class="signature-label">მომსახურების გამწევი:</div>
-      <div class="signature-line">
-        <span class="signature-line-lbl">სახელი/გვარი</span>
-        <span class="signature-line-underline"></span>
-      </div>
-      <div class="signature-line">
-        <span class="signature-line-lbl">ხელმოწერა</span>
-        <span class="signature-line-underline"></span>
-      </div>
-    </div>
-    <div class="signature-col">
-      <div class="signature-label">მომსახურების მიმღები:</div>
-      <div class="signature-line">
-        <span class="signature-line-lbl">სახელი/გვარი</span>
-        <span class="signature-line-underline"></span>
-      </div>
-      <div class="signature-line">
-        <span class="signature-line-lbl">ხელმოწერა</span>
-        <span class="signature-line-underline"></span>
-      </div>
-    </div>
-  </div>
+  <table class="signature-row">
+    <tr>
+      <td class="signature-col">
+        <div class="signature-label">მომსახურების გამწევი:</div>
+        <div class="signature-line">
+          <span class="signature-line-lbl">სახელი/გვარი</span>
+          <span class="signature-line-underline"></span>
+        </div>
+        <div class="signature-line">
+          <span class="signature-line-lbl">ხელმოწერა</span>
+          <span class="signature-line-underline"></span>
+        </div>
+      </td>
+      <td class="signature-col">
+        <div class="signature-label">მომსახურების მიმღები:</div>
+        <div class="signature-line">
+          <span class="signature-line-lbl">სახელი/გვარი</span>
+          <span class="signature-line-underline"></span>
+        </div>
+        <div class="signature-line">
+          <span class="signature-line-lbl">ხელმოწერა</span>
+          <span class="signature-line-underline"></span>
+        </div>
+      </td>
+    </tr>
+  </table>
 
 </div>
 </body>
