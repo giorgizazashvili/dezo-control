@@ -19,4 +19,14 @@ class ProductSettlement extends Model
     {
         return $this->hasMany(ProductSettlementItem::class);
     }
+
+    public function movementProductItems(): HasMany
+    {
+        return $this->hasMany(MovementProductItem::class);
+    }
+
+    public function movementProductPlacementItems(): HasMany
+    {
+        return $this->hasMany(MovementProductPlacementItem::class);
+    }
 }

@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -107,11 +108,36 @@ class OrganizationResource extends Resource
             ])
             ->actions([
                 EditAction::make()->label('რედაქტირება'),
-                DeleteAction::make()->label('წაშლა'),
+                DeleteAction::make()
+                    ->label('წაშლა')
+                    ->before(function (Organization $record, \Closure $halt): void {
+                        if ($record->monitorings()->exists() || $record->monitoringLogs()->exists()) {
+                            Notification::make()
+                                ->title('წაშლა შეუძლებელია')
+                                ->body('ეს ჩანაწერი გამოყენებულია და ვერ წაიშლება.')
+                                ->danger()
+                                ->send();
+                            $halt();
+                        }
+                    }),
             ])
             ->bulkActions([
                 \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make()->label('წაშლა'),
+                    \Filament\Actions\DeleteBulkAction::make()
+                        ->label('წაშლა')
+                        ->before(function (\Illuminate\Database\Eloquent\Collection $records, \Closure $halt): void {
+                            $blocked = $records->filter(
+                                fn (Organization $r) => $r->monitorings()->exists() || $r->monitoringLogs()->exists()
+                            );
+                            if ($blocked->isNotEmpty()) {
+                                Notification::make()
+                                    ->title('წაშლა შეუძლებელია')
+                                    ->body('შერჩეული ჩანაწერ(ებ)ი გამოყენებულია და ვერ წაიშლება.')
+                                    ->danger()
+                                    ->send();
+                                $halt();
+                            }
+                        }),
                 ]),
             ]);
     }
