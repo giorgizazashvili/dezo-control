@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MonitoringResource\Pages;
 use App\Models\Monitoring;
+use App\Models\MonitoringOption;
 use App\Models\SettlementComponent;
 use App\Services\MonitoringService;
 use Filament\Actions\Action;
@@ -171,9 +172,17 @@ class MonitoringResource extends Resource
             // ── ინსპექციის მონაცემები ──────────────────────────────────
             Section::make('ინსპექციის მონაცემები')
                 ->schema([
-                    TextInput::make('pest_type')
+                    Select::make('pest_type')
                         ->label('მავნებლის ტიპი')
-                        ->nullable(),
+                        ->options(fn () => MonitoringOption::where('type', 'pest_type')->pluck('name', 'name'))
+                        ->searchable()
+                        ->nullable()
+                        ->createOptionForm([
+                            TextInput::make('name')->label('სახელი')->required(),
+                        ])
+                        ->createOptionUsing(function (array $data): string {
+                            return MonitoringOption::firstOrCreate(['type' => 'pest_type', 'name' => $data['name']])->name;
+                        }),
 
                     TextInput::make('pest_quantity')
                         ->label('მავნებლის რაოდენობა')
@@ -181,19 +190,42 @@ class MonitoringResource extends Resource
                         ->minValue(0)
                         ->nullable(),
 
-                    TextInput::make('bait_status')
+                    Select::make('bait_status')
                         ->label('სატყუარას მდგომარეობა')
-                        ->nullable(),
-
-                    TextInput::make('risk_level')
-                        ->label('რისკის დონე')
-                        ->nullable(),
-
-                    Textarea::make('action_taken')
-                        ->label('მიღებული ზომა')
-                        ->rows(2)
+                        ->options(fn () => MonitoringOption::where('type', 'bait_status')->pluck('name', 'name'))
+                        ->searchable()
                         ->nullable()
-                        ->columnSpanFull(),
+                        ->createOptionForm([
+                            TextInput::make('name')->label('სახელი')->required(),
+                        ])
+                        ->createOptionUsing(function (array $data): string {
+                            return MonitoringOption::firstOrCreate(['type' => 'bait_status', 'name' => $data['name']])->name;
+                        }),
+
+                    Select::make('risk_level')
+                        ->label('რისკის დონე')
+                        ->options(fn () => MonitoringOption::where('type', 'risk_level')->pluck('name', 'name'))
+                        ->searchable()
+                        ->nullable()
+                        ->createOptionForm([
+                            TextInput::make('name')->label('სახელი')->required(),
+                        ])
+                        ->createOptionUsing(function (array $data): string {
+                            return MonitoringOption::firstOrCreate(['type' => 'risk_level', 'name' => $data['name']])->name;
+                        }),
+
+                    Select::make('action_taken')
+                        ->label('მიღებული ზომა')
+                        ->options(fn () => MonitoringOption::where('type', 'action_taken')->pluck('name', 'name'))
+                        ->searchable()
+                        ->nullable()
+                        ->columnSpanFull()
+                        ->createOptionForm([
+                            TextInput::make('name')->label('სახელი')->required(),
+                        ])
+                        ->createOptionUsing(function (array $data): string {
+                            return MonitoringOption::firstOrCreate(['type' => 'action_taken', 'name' => $data['name']])->name;
+                        }),
 
                     Textarea::make('inspection_note')
                         ->label('ინსპექციის შენიშვნა')
