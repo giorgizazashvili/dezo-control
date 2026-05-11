@@ -21,6 +21,7 @@ class Monitoring extends Model
         'bait_status',
         'action_taken',
         'inspection_note',
+        'inspection_photos',
         'risk_level',
     ];
 
@@ -29,6 +30,7 @@ class Monitoring extends Model
         return [
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            'inspection_photos' => 'array',
         ];
     }
 

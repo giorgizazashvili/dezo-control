@@ -11,6 +11,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -230,6 +231,17 @@ class MonitoringResource extends Resource
                     Textarea::make('inspection_note')
                         ->label('ინსპექციის შენიშვნა')
                         ->rows(2)
+                        ->nullable()
+                        ->columnSpanFull(),
+
+                    FileUpload::make('inspection_photos')
+                        ->label('ფოტოები')
+                        ->image()
+                        ->multiple()
+                        ->disk('public')
+                        ->directory('monitoring-photos')
+                        ->imagePreviewHeight('80')
+                        ->panelLayout('grid')
                         ->nullable()
                         ->columnSpanFull(),
                 ])
