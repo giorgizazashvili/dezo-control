@@ -105,11 +105,15 @@ class MonitoringResource extends Resource
             // ── დაწყება / დასრულება ────────────────────────────────────
             DateTimePicker::make('started_at')
                 ->label('დაწყების დრო')
+                ->native(false)
+                ->displayFormat('d/m/Y H:i')
                 ->seconds(false)
                 ->nullable(),
 
             DateTimePicker::make('finished_at')
                 ->label('დასრულების დრო')
+                ->native(false)
+                ->displayFormat('d/m/Y H:i')
                 ->seconds(false)
                 ->nullable(),
 
