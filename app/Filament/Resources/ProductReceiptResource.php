@@ -48,6 +48,13 @@ class ProductReceiptResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
+            DatePicker::make('created_at')
+                ->label('შექმნის თარიღი')
+                ->native(false)
+                ->displayFormat('d/m/Y')
+                ->default(now())
+                ->required(),
+
             Repeater::make('productItems')
                 ->label('პროდუქტები')
                 ->relationship('productItems')

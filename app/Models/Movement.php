@@ -8,18 +8,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Movement extends Model
 {
-    protected $fillable = ['operation_type', 'organization_id', 'comment', 'source_movement_id', 'source_monitoring_id'];
+    protected $fillable = ['operation_type', 'organization_id', 'comment', 'source_movement_id', 'source_monitoring_id', 'created_at'];
 
-    const OPERATION_COMPONENT_RECEIPT     = 'component_receipt';
-    const OPERATION_PRODUCT_RECEIPT       = 'product_receipt';
+    const OPERATION_COMPONENT_RECEIPT = 'component_receipt';
+
+    const OPERATION_PRODUCT_RECEIPT = 'product_receipt';
+
     const OPERATION_COMPONENT_CONSUMPTION = 'component_consumption';
-    const OPERATION_PRODUCT_PLACEMENT     = 'product_placement';
+
+    const OPERATION_PRODUCT_PLACEMENT = 'product_placement';
 
     public static function operationTypes(): array
     {
         return [
             self::OPERATION_COMPONENT_RECEIPT => 'კომპონენტის მიღება',
-            self::OPERATION_PRODUCT_RECEIPT   => 'პროდუქტის მიღება',
+            self::OPERATION_PRODUCT_RECEIPT => 'პროდუქტის მიღება',
             self::OPERATION_PRODUCT_PLACEMENT => 'ობიექტზე განთავსება',
         ];
     }
