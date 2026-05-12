@@ -15,9 +15,9 @@ class SettlementComponent extends Model
         return $this->belongsTo(Dimension::class);
     }
 
-    public function movementProductItems(): HasMany
+    public function movementComponentItems(): HasMany
     {
-        return $this->hasMany(MovementProductItem::class);
+        return $this->hasMany(MovementComponentItem::class);
     }
 
     public function productSettlementItems(): HasMany

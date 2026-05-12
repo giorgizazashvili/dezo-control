@@ -88,7 +88,7 @@ class SettlementComponentResource extends Resource
                     ->label('წაშლა')
                     ->before(function (DeleteAction $action, SettlementComponent $record): void {
                         if (
-                            $record->movementProductItems()->exists() ||
+                            $record->movementComponentItems()->exists() ||
                             $record->productSettlementItems()->exists() ||
                             $record->monitoringComponentReplacements()->exists()
                         ) {
@@ -106,7 +106,7 @@ class SettlementComponentResource extends Resource
                     \Filament\Actions\DeleteBulkAction::make()
                         ->label('წაშლა')
                         ->before(function (\Filament\Actions\DeleteBulkAction $action, \Illuminate\Database\Eloquent\Collection $records): void {
-                            $blocked = $records->filter(fn (SettlementComponent $r) => $r->movementProductItems()->exists() ||
+                            $blocked = $records->filter(fn (SettlementComponent $r) => $r->movementComponentItems()->exists() ||
                                 $r->productSettlementItems()->exists() ||
                                 $r->monitoringComponentReplacements()->exists()
                             );
