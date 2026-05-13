@@ -4,6 +4,9 @@ namespace App\Filament\Resources\MonitoringResource\Pages;
 
 use App\Exceptions\InsufficientStockException;
 use App\Filament\Resources\MonitoringResource;
+use App\Filament\Resources\MonitoringSessionResource;
+use App\Models\Movement;
+use App\Models\MovementProductPlacementItem;
 use App\Services\MonitoringService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -16,25 +19,43 @@ class EditMonitoring extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()->label('წაშლა'),
+            Actions\DeleteAction::make()
+                ->label('წაშლა')
+                ->after(fn () => redirect(
+                    MonitoringSessionResource::getUrl('view', ['record' => $this->record->monitoring_session_id])
+                )),
         ];
-    }
-
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
     }
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $monitoring = $this->record->load('movementProductItem.productSettlement.dimension', 'movementProductItem.movement');
+        $monitoring = $this->record->load(
+            'movementProductItem.productSettlement.dimension',
+            'monitoringSession'
+        );
+
         $item = $monitoring->movementProductItem;
 
         if ($item) {
             $product = $item->productSettlement;
-            $data['_box_product']   = $product->name . ' — ' . ($product->dimension?->name ?? '');
-            $data['_box_quantity']  = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
-            $data['_box_date']      = $item->movement->created_at->format('d.m.Y H:i');
+            $data['_device_name'] = $product->name.' — '.($product->dimension?->name ?? '');
+
+            $placementItem = MovementProductPlacementItem::query()
+                ->where('product_settlement_id', $item->product_settlement_id)
+                ->whereHas('movement', fn ($q) => $q
+                    ->where('organization_id', $monitoring->monitoringSession->organization_id)
+                    ->where('operation_type', Movement::OPERATION_PRODUCT_PLACEMENT)
+                )
+                ->latest('id')
+                ->first();
+
+            if ($placementItem) {
+                $data['_device_location'] = implode(' / ', array_filter([
+                    $placementItem->unique_code,
+                    $placementItem->zone,
+                    $placementItem->location,
+                ]));
+            }
         }
 
         return $data;
@@ -42,12 +63,11 @@ class EditMonitoring extends EditRecord
 
     protected function afterSave(): void
     {
-        $monitoring = $this->record;
-        $service    = app(MonitoringService::class);
+        $service = app(MonitoringService::class);
 
         try {
-            $service->reverseComponentReplacements($monitoring);
-            $service->processComponentReplacements($monitoring);
+            $service->reverseComponentReplacements($this->record);
+            $service->processComponentReplacements($this->record);
         } catch (InsufficientStockException $e) {
             Notification::make()
                 ->title('კომპონენტის ნაშთი არ არის საკმარისი')
@@ -58,5 +78,10 @@ class EditMonitoring extends EditRecord
 
             $this->halt(shouldRollbackDatabaseTransaction: true);
         }
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return MonitoringSessionResource::getUrl('view', ['record' => $this->record->monitoring_session_id]);
     }
 }

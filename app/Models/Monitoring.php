@@ -9,10 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Monitoring extends Model
 {
     protected $fillable = [
-        'organization_id',
-        'technician',
-        'started_at',
-        'finished_at',
+        'monitoring_session_id',
         'movement_product_item_id',
         'qr_data',
         'notes',
@@ -28,15 +25,13 @@ class Monitoring extends Model
     protected function casts(): array
     {
         return [
-            'started_at' => 'datetime',
-            'finished_at' => 'datetime',
             'inspection_photos' => 'array',
         ];
     }
 
-    public function organization(): BelongsTo
+    public function monitoringSession(): BelongsTo
     {
-        return $this->belongsTo(Organization::class);
+        return $this->belongsTo(MonitoringSession::class);
     }
 
     public function movementProductItem(): BelongsTo

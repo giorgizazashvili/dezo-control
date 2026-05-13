@@ -40,23 +40,6 @@
       width: 155px;
     }
 
-    .logo-top {
-      font-size: 28px;
-      font-weight: 900;
-      color: #cc0000;
-      letter-spacing: -1px;
-      line-height: 1;
-    }
-    .logo-bot {
-      font-size: 11.5px;
-      font-weight: bold;
-      color: #333;
-      letter-spacing: 5px;
-      border-top: 2px solid #cc0000;
-      padding-top: 3px;
-      margin-top: 2px;
-    }
-
     .date-block { padding: 0; width: 100%; border-collapse: collapse; }
     .date-item {
       padding: 3px 0;
@@ -182,9 +165,9 @@
       </td>
       <td style="width:35%">
         <div style="font-weight:bold; margin-bottom:3px">მომსახურების მიმღები:</div>
-        <div>{{ $monitoring->organization->legal_form }} „{{ $monitoring->organization->name }}"</div>
-        <div>ს/ბ {{ $monitoring->organization->identification }}</div>
-        <div>{{ $monitoring->organization->address }}</div>
+        <div>{{ $session->organization->legal_form }} „{{ $session->organization->name }}"</div>
+        <div>ს/ბ {{ $session->organization->identification }}</div>
+        <div>{{ $session->organization->address }}</div>
       </td>
     </tr>
     <tr>
@@ -193,15 +176,15 @@
         <div class="date-block">
           <div class="date-item">
             <span class="date-lbl">თარიღი</span>
-            <span class="date-val">{{ $monitoring->created_at->format('d.m.Y') }}</span>
+            <span class="date-val">{{ $session->started_at?->format('d.m.Y') }}</span>
           </div>
           <div class="date-item">
             <span class="date-lbl">დაწყების დრო</span>
-            <span class="date-val">{{ $monitoring->started_at?->format('H:i') }}</span>
+            <span class="date-val">{{ $session->started_at?->format('H:i') }}</span>
           </div>
           <div class="date-item">
             <span class="date-lbl">დასრულების დრო</span>
-            <span class="date-val">{{ $monitoring->finished_at?->format('H:i') }}</span>
+            <span class="date-val">{{ $session->finished_at?->format('H:i') }}</span>
           </div>
         </div>
       </td>
@@ -209,7 +192,7 @@
   </table>
 
   <div class="meta-row">
-    <div>ტექნიკოსი: <span>{{ $monitoring->technician ?? '—' }}</span></div>
+    <div>ტექნიკოსი: <span>{{ $session->technician ?? '—' }}</span></div>
   </div>
 
   <div class="svc-desc">
@@ -220,8 +203,8 @@
   <table class="rpt">
     <thead>
       <tr>
-        <th style="width:38%; text-align:left">მოწყობილობის მიხედვით</th>
-        <th style="width:15%">მოწყობილობის რ-ბა</th>
+        <th style="width:38%; text-align:left">მოწყობილობის ტიპი</th>
+        <th style="width:15%">რ-ბა</th>
         <th style="width:15%">შემოწმებული</th>
         <th style="width:16%">აქტიური</th>
         <th style="width:16%">გამოცვლილი</th>
@@ -242,33 +225,55 @@
     </tbody>
   </table>
 
-  <div class="sec-title">ინსპექციის შეჯამება:</div>
-  <table class="rpt">
-    <thead>
-      <tr>
-        <th style="width:40%; text-align:left">მოწყობილობის მიხედვით</th>
-        <th style="width:20%">მოწყობილობის ID</th>
-        <th style="width:25%">მავნებლის ტიპი</th>
-        <th style="width:15%">ჯამი</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse ($pestLogs as $log)
+  @if($componentSummary->isNotEmpty())
+    <div class="sec-title">გამოყენებული კომპონენტები</div>
+    <table class="rpt">
+      <thead>
         <tr>
-          <td>{{ $log->movementProductItem?->productSettlement?->name ?? '—' }}</td>
-          <td class="center">{{ $log->unique_code ?? '—' }}</td>
-          <td class="center">{{ $log->pest_type ?? '—' }}</td>
-          <td class="center">{{ $log->pest_quantity ? rtrim(rtrim(number_format((float) $log->pest_quantity, 4, '.', ''), '0'), '.') : '—' }}</td>
+          <th style="width:60%; text-align:left">კომპონენტი</th>
+          <th style="width:20%">განზომილება</th>
+          <th style="width:20%">ჯამური რაოდენობა</th>
         </tr>
-      @empty
-        <tr class="empty-row"><td colspan="4">მავნებლები არ დაფიქსირებულა</td></tr>
-      @endforelse
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        @foreach ($componentSummary as $comp)
+          <tr>
+            <td>{{ $comp['name'] }}</td>
+            <td class="center">{{ $comp['dimension'] ?: '—' }}</td>
+            <td class="center">{{ rtrim(rtrim(number_format((float) $comp['quantity'], 4, '.', ''), '0'), '.') }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+  @endif
 
-  @if ($monitoring->notes)
+  @if($pestLogs->isNotEmpty())
+    <div class="sec-title">მავნებლების ფიქსაცია</div>
+    <table class="rpt">
+      <thead>
+        <tr>
+          <th style="width:35%; text-align:left">მოწყობილობა</th>
+          <th style="width:20%">ID</th>
+          <th style="width:25%">მავნებლის ტიპი</th>
+          <th style="width:20%">რაოდენობა</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach ($pestLogs as $log)
+          <tr>
+            <td>{{ $log->movementProductItem?->productSettlement?->name ?? '—' }}</td>
+            <td class="center">{{ $log->unique_code ?? '—' }}</td>
+            <td class="center">{{ $log->pest_type ?? '—' }}</td>
+            <td class="center">{{ $log->pest_quantity ? rtrim(rtrim(number_format((float) $log->pest_quantity, 4, '.', ''), '0'), '.') : '—' }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+  @endif
+
+  @if ($session->notes)
     <div class="sec-title">შენიშვნა</div>
-    <div class="notes-block">{{ $monitoring->notes }}</div>
+    <div class="notes-block">{{ $session->notes }}</div>
   @endif
 
   <table class="signature-row">

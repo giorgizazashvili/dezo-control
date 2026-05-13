@@ -6,33 +6,46 @@ Route::get('/', function () {
     return redirect('app');
 });
 
-Route::get('/print/service-report/{monitoring}', function (\App\Models\Monitoring $monitoring) {
-    $monitoring->load([
+Route::get('/print/service-report/session/{session}', function (\App\Models\MonitoringSession $session) {
+    $session->load([
         'organization',
-        'logs.movementProductItem.productSettlement',
+        'monitorings.movementProductItem.productSettlement',
+        'monitorings.componentReplacements.settlementComponent.dimension',
+        'monitorings.logs.movementProductItem.productSettlement',
     ]);
 
-    $deviceSummary = $monitoring->logs
-        ->groupBy(fn ($log) => $log->movementProductItem?->productSettlement?->name ?? '—')
-        ->map(fn ($logs, $name) => [
+    $allLogs = $session->monitorings->flatMap(fn ($m) => $m->logs);
+
+    $deviceSummary = $session->monitorings
+        ->groupBy(fn ($m) => $m->movementProductItem?->productSettlement?->name ?? '—')
+        ->map(fn ($monitorings, $name) => [
             'name' => $name,
-            'total' => $logs->count(),
-            'inspected' => $logs->where('type', 'inspection')->count(),
-            'active' => $logs->where('inspection_status', 'active')->count(),
-            'replaced' => $logs->where('type', 'replacement')->count(),
+            'total' => $monitorings->count(),
+            'inspected' => $monitorings->filter(fn ($m) => $m->logs->isNotEmpty())->count(),
+            'active' => $monitorings->filter(fn ($m) => (float) $m->pest_quantity > 0)->count(),
+            'replaced' => $monitorings->filter(fn ($m) => $m->componentReplacements->filter(fn ($r) => (float) $r->quantity > 0)->isNotEmpty())->count(),
         ])
         ->values();
 
-    $pestLogs = $monitoring->logs->filter(
-        fn ($log) => $log->pest_type || $log->pest_quantity > 0
-    );
+    $pestLogs = $allLogs->filter(fn ($log) => $log->pest_type || (float) $log->pest_quantity > 0);
 
-    $filename = 'service-report-'.$monitoring->id.'.pdf';
+    $componentSummary = $session->monitorings
+        ->flatMap(fn ($m) => $m->componentReplacements)
+        ->filter(fn ($r) => (float) $r->quantity > 0)
+        ->groupBy('settlement_component_id')
+        ->map(fn ($items) => [
+            'name' => $items->first()->settlementComponent?->name ?? '—',
+            'dimension' => $items->first()->settlementComponent?->dimension?->name ?? '',
+            'quantity' => $items->sum(fn ($r) => (float) $r->quantity),
+        ])
+        ->values();
 
-    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('monitoring', 'deviceSummary', 'pestLogs'))
+    $filename = 'service-report-'.$session->id.'.pdf';
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary'))
         ->setPaper('a4')
         ->stream($filename);
-})->name('print.service-report');
+})->name('print.service-report.session');
 
 Route::get('/export/monitoring-report', function () {
     $filename = 'monitoring-report-'.now()->format('Y-m-d').'.xlsx';

@@ -5,12 +5,12 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MonitoringResource\Pages;
 use App\Models\Monitoring;
 use App\Models\MonitoringOption;
+use App\Models\MovementProductItem;
+use App\Models\MovementProductPlacementItem;
+use App\Models\ProductSettlementItem;
 use App\Models\SettlementComponent;
-use App\Services\MonitoringService;
-use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -19,26 +19,19 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Marcelorodrigo\FilamentBarcodeScannerField\Forms\Components\BarcodeInput;
 
 class MonitoringResource extends Resource
 {
     protected static ?string $model = Monitoring::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-magnifying-glass';
-
-    protected static ?string $navigationLabel = 'მონიტორინგი';
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $modelLabel = 'მონიტორინგი';
 
     protected static ?string $pluralModelLabel = 'მონიტორინგები';
-
-    protected static ?int $navigationSort = 9;
 
     public static function canViewAny(): bool
     {
@@ -48,103 +41,81 @@ class MonitoringResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            // ── ბოქსის QR სკანი ────────────────────────────────────────
-            BarcodeInput::make('qr_data')
-                ->label('QR კოდი (სკანი)')
-                ->placeholder('სკანერი ჩასვამს მონაცემებს...')
-                ->live()
-                ->afterStateUpdated(function (Set $set, ?string $state) {
-                    if (! $state) {
-                        $set('movement_product_item_id', null);
-                        $set('_box_product', null);
-                        $set('_box_quantity', null);
-                        $set('_box_date', null);
-                        $set('componentReplacements', []);
-
-                        return;
-                    }
-
-                    $service = app(MonitoringService::class);
-                    $item = $service->findBoxFromQr($state);
-
-                    if ($item) {
-                        $product = $item->productSettlement;
-                        $set('movement_product_item_id', $item->id);
-                        $set('organization_id', $service->getPlacementOrganizationId($item->product_settlement_id));
-                        $set('_box_product', $product->name.' — '.($product->dimension?->name ?? ''));
-                        $set('_box_quantity', rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.'));
-                        $set('_box_date', $item->movement->created_at->format('d.m.Y H:i'));
-                        $set('componentReplacements', $service->getProductComponentsWithStock($item->product_settlement_id, $item->id));
-                    } else {
-                        $set('movement_product_item_id', null);
-                        $set('_box_product', 'ბოქსი ვერ მოიძებნა');
-                        $set('_box_quantity', null);
-                        $set('_box_date', null);
-                        $set('componentReplacements', []);
-                    }
-                })
-                ->columnSpanFull(),
+            Hidden::make('monitoring_session_id')
+                ->default(fn () => request()->query('session_id')),
 
             Hidden::make('movement_product_item_id')
-                ->required(),
+                ->default(function () {
+                    $placementItemId = request()->query('placement_item_id');
+                    if (! $placementItemId) {
+                        return null;
+                    }
 
-            // ── ობიექტი ────────────────────────────────────────────────
-            Select::make('organization_id')
-                ->label('ობიექტი')
-                ->relationship('organization', 'name')
-                ->disabled()
-                ->dehydrated()
-                ->required()
-                ->columnSpanFull(),
+                    $placementItem = MovementProductPlacementItem::find($placementItemId);
 
-            // ── ტექნიკოსი ──────────────────────────────────────────────
-            TextInput::make('technician')
-                ->label('ტექნიკოსი')
-                ->default(fn () => auth()->user()?->name)
-                ->required()
-                ->columnSpanFull(),
+                    return $placementItem
+                        ? MovementProductItem::where('product_settlement_id', $placementItem->product_settlement_id)->latest('id')->value('id')
+                        : null;
+                }),
 
-            // ── დაწყება / დასრულება ────────────────────────────────────
-            DateTimePicker::make('started_at')
-                ->label('დაწყების დრო')
-                ->native(false)
-                ->displayFormat('d/m/Y H:i')
-                ->seconds(false)
-                ->nullable(),
-
-            DateTimePicker::make('finished_at')
-                ->label('დასრულების დრო')
-                ->native(false)
-                ->displayFormat('d/m/Y H:i')
-                ->seconds(false)
-                ->nullable(),
-
-            // ── ბოქსის მონაცემები (ავტო-შევსება) ─────────────────────
-            TextInput::make('_box_product')
+            TextInput::make('_device_name')
                 ->label('მოწყობილობა')
                 ->disabled()
                 ->dehydrated(false)
-                ->placeholder('—')
-                ->visible(fn (Get $get) => (bool) $get('qr_data')),
+                ->default(function () {
+                    $placementItemId = request()->query('placement_item_id');
+                    if (! $placementItemId) {
+                        return null;
+                    }
 
-            TextInput::make('_box_quantity')
-                ->label('რაოდენობა')
+                    $item = MovementProductPlacementItem::with('productSettlement.dimension')->find($placementItemId);
+
+                    return $item
+                        ? $item->productSettlement->name.' — '.($item->productSettlement->dimension?->name ?? '')
+                        : null;
+                })
+                ->columnSpan(2),
+
+            TextInput::make('_device_location')
+                ->label('კოდი / ზონა / მდებარეობა')
                 ->disabled()
                 ->dehydrated(false)
-                ->placeholder('—')
-                ->visible(fn (Get $get) => (bool) $get('qr_data')),
+                ->default(function () {
+                    $placementItemId = request()->query('placement_item_id');
+                    if (! $placementItemId) {
+                        return null;
+                    }
 
-            TextInput::make('_box_date')
-                ->label('მიღების თარიღი')
-                ->disabled()
-                ->dehydrated(false)
-                ->placeholder('—')
-                ->visible(fn (Get $get) => (bool) $get('qr_data')),
+                    $item = MovementProductPlacementItem::find($placementItemId);
 
-            // ── ჩანაცვლებული კომპონენტები ─────────────────────────────
+                    return $item
+                        ? implode(' / ', array_filter([$item->unique_code, $item->zone, $item->location]))
+                        : null;
+                })
+                ->columnSpan(2),
+
             Repeater::make('componentReplacements')
                 ->label('ჩანაცვლებული კომპონენტები')
                 ->relationship('componentReplacements')
+                ->default(function (): array {
+                    $placementItemId = request()->query('placement_item_id');
+                    if (! $placementItemId) {
+                        return [];
+                    }
+
+                    $placementItem = MovementProductPlacementItem::find($placementItemId);
+                    if (! $placementItem) {
+                        return [];
+                    }
+
+                    return ProductSettlementItem::where('product_settlement_id', $placementItem->product_settlement_id)
+                        ->get()
+                        ->map(fn (ProductSettlementItem $item) => [
+                            'settlement_component_id' => $item->settlement_component_id,
+                            'quantity' => $item->quantity,
+                        ])
+                        ->toArray();
+                })
                 ->schema([
                     Select::make('settlement_component_id')
                         ->label('კომპონენტი')
@@ -170,7 +141,6 @@ class MonitoringResource extends Resource
                 ->reorderable()
                 ->columnSpanFull(),
 
-            // ── ინსპექციის მონაცემები ──────────────────────────────────
             Section::make('ინსპექციის მონაცემები')
                 ->schema([
                     Select::make('pest_type')
@@ -178,12 +148,8 @@ class MonitoringResource extends Resource
                         ->options(fn () => MonitoringOption::where('type', 'pest_type')->pluck('name', 'name'))
                         ->searchable()
                         ->nullable()
-                        ->createOptionForm([
-                            TextInput::make('name')->label('სახელი')->required(),
-                        ])
-                        ->createOptionUsing(function (array $data): string {
-                            return MonitoringOption::firstOrCreate(['type' => 'pest_type', 'name' => $data['name']])->name;
-                        }),
+                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
+                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'pest_type', 'name' => $data['name']])->name),
 
                     TextInput::make('pest_quantity')
                         ->label('მავნებლის რაოდენობა')
@@ -196,24 +162,16 @@ class MonitoringResource extends Resource
                         ->options(fn () => MonitoringOption::where('type', 'bait_status')->pluck('name', 'name'))
                         ->searchable()
                         ->nullable()
-                        ->createOptionForm([
-                            TextInput::make('name')->label('სახელი')->required(),
-                        ])
-                        ->createOptionUsing(function (array $data): string {
-                            return MonitoringOption::firstOrCreate(['type' => 'bait_status', 'name' => $data['name']])->name;
-                        }),
+                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
+                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'bait_status', 'name' => $data['name']])->name),
 
                     Select::make('risk_level')
                         ->label('რისკის დონე')
                         ->options(fn () => MonitoringOption::where('type', 'risk_level')->pluck('name', 'name'))
                         ->searchable()
                         ->nullable()
-                        ->createOptionForm([
-                            TextInput::make('name')->label('სახელი')->required(),
-                        ])
-                        ->createOptionUsing(function (array $data): string {
-                            return MonitoringOption::firstOrCreate(['type' => 'risk_level', 'name' => $data['name']])->name;
-                        }),
+                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
+                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'risk_level', 'name' => $data['name']])->name),
 
                     Select::make('action_taken')
                         ->label('მიღებული ზომა')
@@ -221,12 +179,8 @@ class MonitoringResource extends Resource
                         ->searchable()
                         ->nullable()
                         ->columnSpanFull()
-                        ->createOptionForm([
-                            TextInput::make('name')->label('სახელი')->required(),
-                        ])
-                        ->createOptionUsing(function (array $data): string {
-                            return MonitoringOption::firstOrCreate(['type' => 'action_taken', 'name' => $data['name']])->name;
-                        }),
+                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
+                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'action_taken', 'name' => $data['name']])->name),
 
                     Textarea::make('inspection_note')
                         ->label('ინსპექციის შენიშვნა')
@@ -248,7 +202,6 @@ class MonitoringResource extends Resource
                 ->columns(2)
                 ->columnSpanFull(),
 
-            // ── შენიშვნა ───────────────────────────────────────────────
             Textarea::make('notes')
                 ->label('შენიშვნა')
                 ->rows(2)
@@ -261,20 +214,11 @@ class MonitoringResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('organization.name')
-                    ->label('ობიექტი')
-                    ->searchable()
-                    ->sortable(),
+                TextColumn::make('monitoringSession.organization.name')
+                    ->label('ობიექტი'),
 
                 TextColumn::make('movementProductItem.productSettlement.name')
-                    ->label('მოწყობილობა')
-                    ->placeholder('—'),
-
-                TextColumn::make('componentReplacements_count')
-                    ->label('ჩანაცვლება')
-                    ->counts('componentReplacements')
-                    ->badge()
-                    ->color('warning'),
+                    ->label('მოწყობილობა'),
 
                 TextColumn::make('created_at')
                     ->label('თარიღი')
@@ -283,19 +227,8 @@ class MonitoringResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->actions([
-                Action::make('print')
-                    ->label('რეპორტი')
-                    ->icon('heroicon-o-printer')
-                    ->color('gray')
-                    ->url(fn (Monitoring $record) => route('print.service-report', $record))
-                    ->openUrlInNewTab(),
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()->label('წაშლა'),
-            ])
-            ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make()->label('წაშლა'),
-                ]),
             ]);
     }
 
