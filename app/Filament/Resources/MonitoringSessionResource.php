@@ -45,6 +45,8 @@ class MonitoringSessionResource extends Resource
             TextInput::make('technician')
                 ->label('ტექნიკოსი')
                 ->default(fn () => auth()->user()?->name)
+                ->disabled()
+                ->dehydrated()
                 ->required()
                 ->columnSpanFull(),
         ]);
