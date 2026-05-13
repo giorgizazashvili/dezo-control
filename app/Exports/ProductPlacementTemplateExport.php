@@ -37,7 +37,7 @@ class ProductPlacementTemplateSheet implements FromCollection, ShouldAutoSize, W
     public function headings(): array
     {
         return [
-            'პროდუქტი (სახელი)',
+            'მოწყობილობა (სახელი)',
             'რაოდენობა',
             'უნიკალური კოდი',
             'ზონა',
@@ -94,7 +94,7 @@ class ProductPlacementProductsReferenceSheet implements FromQuery, ShouldAutoSiz
 
     public function title(): string
     {
-        return 'პროდუქტები (ცნობარი)';
+        return 'მოწყობილობები (ცნობარი)';
     }
 
     public function styles(Worksheet $sheet): array

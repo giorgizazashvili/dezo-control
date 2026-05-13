@@ -28,17 +28,17 @@ class ProductReceiptResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-inbox-arrow-down';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'პროდუქტის მიღებები';
+    protected static \UnitEnum|string|null $navigationGroup = 'მოწყობილობის მიღებები';
 
-    protected static ?string $navigationLabel = 'პროდუქტის მიღება';
+    protected static ?string $navigationLabel = 'მოწყობილობის მიღება';
 
     protected static ?string $slug = 'product-receipts';
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $modelLabel = 'პროდუქტის მიღება';
+    protected static ?string $modelLabel = 'მოწყობილობის მიღება';
 
-    protected static ?string $pluralModelLabel = 'პროდუქტის მიღებები';
+    protected static ?string $pluralModelLabel = 'მოწყობილობის მიღებები';
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
@@ -56,11 +56,11 @@ class ProductReceiptResource extends Resource
                 ->required(),
 
             Repeater::make('productItems')
-                ->label('პროდუქტები')
+                ->label('მოწყობილობები')
                 ->relationship('productItems')
                 ->schema([
                     Select::make('product_settlement_id')
-                        ->label('პროდუქტი')
+                        ->label('მოწყობილობა')
                         ->relationship('productSettlement', 'name', fn ($q) => $q?->with('dimension'))
                         ->getOptionLabelFromRecordUsing(
                             fn (ProductSettlement $r) => $r->name.' — '.($r->dimension?->name ?? '')
@@ -69,7 +69,7 @@ class ProductReceiptResource extends Resource
                         ->preload()
                         ->required()
                         ->columnSpan(2)
-                        ->createOptionModalHeading('ახალი პროდუქტი')
+                        ->createOptionModalHeading('ახალი მოწყობილობა')
                         ->createOptionForm([
                             TextInput::make('name')
                                 ->label('დასახელება')
@@ -105,7 +105,7 @@ class ProductReceiptResource extends Resource
                         ->columnSpan(1),
                 ])
                 ->columns(4)
-                ->addActionLabel('პროდუქტის დამატება')
+                ->addActionLabel('მოწყობილობის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),
         ]);

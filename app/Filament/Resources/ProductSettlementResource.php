@@ -28,13 +28,13 @@ class ProductSettlementResource extends Resource
 
     protected static \UnitEnum|string|null $navigationGroup = 'ცნობარები';
 
-    protected static ?string $navigationLabel = 'პროდუქტების დას.';
+    protected static ?string $navigationLabel = 'მოწყობილობების დას.';
 
     protected static ?int $navigationSort = 2;
 
     protected static ?string $modelLabel = 'დასახლება';
 
-    protected static ?string $pluralModelLabel = 'პროდუქტების დას.';
+    protected static ?string $pluralModelLabel = 'მოწყობილობების დას.';
 
     public static function form(Schema $schema): Schema
     {

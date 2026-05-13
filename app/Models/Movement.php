@@ -22,7 +22,7 @@ class Movement extends Model
     {
         return [
             self::OPERATION_COMPONENT_RECEIPT => 'კომპონენტის მიღება',
-            self::OPERATION_PRODUCT_RECEIPT => 'პროდუქტის მიღება',
+            self::OPERATION_PRODUCT_RECEIPT => 'მოწყობილობის მიღება',
             self::OPERATION_PRODUCT_PLACEMENT => 'ობიექტზე განთავსება',
         ];
     }

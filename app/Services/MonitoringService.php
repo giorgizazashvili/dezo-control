@@ -127,7 +127,7 @@ class MonitoringService
     }
 
     /**
-     * პროდუქტის ბოლო განთავსების ობიექტის ID.
+     * მოწყობილობის ბოლო განთავსების ობიექტის ID.
      */
     public function getPlacementOrganizationId(int $productSettlementId): ?int
     {

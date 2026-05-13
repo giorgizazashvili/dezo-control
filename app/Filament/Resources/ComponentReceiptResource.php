@@ -27,7 +27,7 @@ class ComponentReceiptResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-down-tray';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'პროდუქტის მიღებები';
+    protected static \UnitEnum|string|null $navigationGroup = 'მოწყობილობის მიღებები';
 
     protected static ?string $navigationLabel = 'კომპონენტის მიღება';
 

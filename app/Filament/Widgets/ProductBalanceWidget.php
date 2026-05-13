@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class ProductBalanceWidget extends TableWidget
 {
-    protected static ?string $heading = 'პროდუქტების ნაშთი';
+    protected static ?string $heading = 'მოწყობილობების ნაშთი';
 
     protected int|string|array $columnSpan = 'full';
 
@@ -23,7 +23,7 @@ class ProductBalanceWidget extends TableWidget
 
     protected function getTableQuery(): Builder
     {
-        $receipt   = Movement::OPERATION_PRODUCT_RECEIPT;
+        $receipt = Movement::OPERATION_PRODUCT_RECEIPT;
         $placement = Movement::OPERATION_PRODUCT_PLACEMENT;
 
         return ProductSettlement::query()
@@ -58,7 +58,7 @@ class ProductBalanceWidget extends TableWidget
             ->heading(static::$heading)
             ->columns([
                 TextColumn::make('name')
-                    ->label('პროდუქტი')
+                    ->label('მოწყობილობა')
                     ->searchable()
                     ->sortable(),
 

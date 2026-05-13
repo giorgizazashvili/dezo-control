@@ -104,7 +104,7 @@ class ListProductPlacements extends ListRecords
                             $productName = trim((string) ($row[0] ?? ''));
 
                             if (! $productsByName->has($productName)) {
-                                $errors[] = 'მწკრივი '.($index + 2).": პროდუქტი \"{$productName}\" ვერ მოიძებნა";
+                                $errors[] = 'მწკრივი '.($index + 2).": მოწყობილობა \"{$productName}\" ვერ მოიძებნა";
 
                                 continue;
                             }
@@ -165,7 +165,7 @@ class ListProductPlacements extends ListRecords
 
                         Notification::make()
                             ->title('წარმატებით შესრულდა')
-                            ->body(count($validRows).' პროდუქტი განთავსდა')
+                            ->body(count($validRows).' მოწყობილობა განთავსდა')
                             ->success()
                             ->send();
 

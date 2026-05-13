@@ -121,7 +121,7 @@ class MonitoringResource extends Resource
 
             // ── ბოქსის მონაცემები (ავტო-შევსება) ─────────────────────
             TextInput::make('_box_product')
-                ->label('პროდუქტი')
+                ->label('მოწყობილობა')
                 ->disabled()
                 ->dehydrated(false)
                 ->placeholder('—')
@@ -267,7 +267,7 @@ class MonitoringResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('movementProductItem.productSettlement.name')
-                    ->label('პროდუქტი')
+                    ->label('მოწყობილობა')
                     ->placeholder('—'),
 
                 TextColumn::make('componentReplacements_count')

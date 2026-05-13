@@ -17,7 +17,7 @@ use Illuminate\Support\HtmlString;
 
 class PlacementBalanceWidget extends TableWidget
 {
-    protected static ?string $heading = 'ობიექტზე განთავსებული პროდუქტები';
+    protected static ?string $heading = 'ობიექტზე განთავსებული მოწყობილობები';
 
     protected int|string|array $columnSpan = 'full';
 
@@ -70,7 +70,7 @@ class PlacementBalanceWidget extends TableWidget
                     ->label('ორგანიზაცია'),
 
                 TextColumn::make('product_name')
-                    ->label('პროდუქტი'),
+                    ->label('მოწყობილობა'),
 
                 TextColumn::make('dimension_name')
                     ->label('განზომილება'),
@@ -111,7 +111,7 @@ class PlacementBalanceWidget extends TableWidget
                 Filter::make('product')
                     ->form([
                         Select::make('product_settlement_id')
-                            ->label('პროდუქტი')
+                            ->label('მოწყობილობა')
                             ->options(ProductSettlement::pluck('name', 'id'))
                             ->searchable(),
                     ]),

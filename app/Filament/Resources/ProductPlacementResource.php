@@ -62,11 +62,11 @@ class ProductPlacementResource extends Resource
                 ->nullable(),
 
             Repeater::make('placementItems')
-                ->label('პროდუქტები')
+                ->label('მოწყობილობები')
                 ->relationship('placementItems')
                 ->schema([
                     Select::make('product_settlement_id')
-                        ->label('პროდუქტი')
+                        ->label('მოწყობილობა')
                         ->relationship('productSettlement', 'name', fn ($q) => $q?->with('dimension'))
                         ->getOptionLabelFromRecordUsing(function (ProductSettlement $r) {
                             $stock = app(MovementService::class)->getProductStock($r->id);
@@ -103,7 +103,7 @@ class ProductPlacementResource extends Resource
                         ->columnSpan(1),
                 ])
                 ->columns(5)
-                ->addActionLabel('პროდუქტის დამატება')
+                ->addActionLabel('მოწყობილობის დამატება')
                 ->reorderable()
                 ->columnSpanFull(),
         ]);
