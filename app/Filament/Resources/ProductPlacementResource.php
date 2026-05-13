@@ -56,6 +56,11 @@ class ProductPlacementResource extends Resource
                 ->preload()
                 ->required(),
 
+            DatePicker::make('created_at')
+                ->label('შექმნის თარიღი')
+                ->default(now())
+                ->required(),
+
             Textarea::make('comment')
                 ->label('კომენტარი')
                 ->rows(2)
