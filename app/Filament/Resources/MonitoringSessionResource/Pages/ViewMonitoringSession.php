@@ -8,6 +8,7 @@ use App\Models\Monitoring;
 use App\Models\Movement;
 use App\Models\MovementProductPlacementItem;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -36,11 +37,16 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->visible(fn () => ! $this->record->finished_at)
-                ->requiresConfirmation()
                 ->modalHeading('სესიის დასრულება')
-                ->modalDescription('დარწმუნებული ხართ, რომ მონიტორინგი დასრულდა?')
-                ->action(function () {
-                    $this->record->update(['finished_at' => now()]);
+                ->schema([
+                    DateTimePicker::make('finished_at')
+                        ->label('დასრულების დრო')
+                        ->default(now())
+                        ->required()
+                        ->seconds(false),
+                ])
+                ->action(function (array $data) {
+                    $this->record->update(['finished_at' => $data['finished_at']]);
                     $this->record->refresh();
                 }),
 
@@ -92,15 +98,18 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
 
                 TextColumn::make('unique_code')
                     ->label('კოდი')
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->searchable(),
 
                 TextColumn::make('zone')
                     ->label('ზონა')
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->searchable(),
 
                 TextColumn::make('location')
                     ->label('მდებარეობა')
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->searchable(),
 
                 IconColumn::make('checked')
                     ->label('სტატუსი')

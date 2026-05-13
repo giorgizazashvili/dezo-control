@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MonitoringSessionResource\Pages;
 use App\Models\MonitoringSession;
 use Filament\Actions\Action as TableRowAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
@@ -48,6 +49,13 @@ class MonitoringSessionResource extends Resource
                 ->disabled()
                 ->dehydrated()
                 ->required()
+                ->columnSpanFull(),
+
+            DateTimePicker::make('started_at')
+                ->label('დაწყების დრო')
+                ->default(now())
+                ->required()
+                ->seconds(false)
                 ->columnSpanFull(),
         ]);
     }
