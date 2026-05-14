@@ -1,103 +1,76 @@
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <div
     x-data="{
-        scanning: false,
         detected: null,
         error: null,
-        stream: null,
-        animFrame: null,
+        scanner: null,
 
-        async init() {
-            try {
-                this.stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
-                this.$refs.video.srcObject = this.stream;
-                await this.$refs.video.play();
-                this.scanning = true;
-                this.scan();
-            } catch (e) {
-                this.error = 'კამერაზე წვდომა ვერ მოხერხდა. შეამოწმე ბრაუზერის ნებართვები.';
-            }
+        init() {
+            this.$nextTick(() => this.start());
         },
 
-        scan() {
-            const tick = () => {
-                const video = this.$refs.video;
-                const canvas = this.$refs.canvas;
-                if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    const img = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(img.data, img.width, img.height);
-                    if (code) {
-                        this.stop();
-                        this.detected = code.data;
-                        this.scanning = false;
-                        $wire.set('tableSearch', code.data);
-                        setTimeout(() => $wire.unmountAction(), 800);
-                        return;
-                    }
-                }
-                this.animFrame = requestAnimationFrame(tick);
-            };
-            this.animFrame = requestAnimationFrame(tick);
+        start() {
+            this.scanner = new Html5Qrcode('qr-reader-box');
+            this.scanner.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (code) => this.onDetected(code),
+                () => {}
+            ).catch((err) => {
+                this.error = 'კამერაზე წვდომა ვერ მოხერხდა. შეამოწმე ბრაუზერის ნებართვები.';
+            });
+        },
+
+        onDetected(code) {
+            this.scanner.stop().catch(() => {});
+            this.detected = code;
+            $wire.set('tableSearch', code);
         },
 
         stop() {
-            if (this.animFrame) cancelAnimationFrame(this.animFrame);
-            if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+            if (this.scanner) {
+                this.scanner.stop().catch(() => {});
+            }
         },
 
         manualSubmit() {
             const val = this.$refs.manual.value.trim();
             if (!val) return;
             this.stop();
-            this.scanning = false;
+            this.detected = val;
             $wire.set('tableSearch', val);
-            setTimeout(() => $wire.unmountAction(), 300);
         }
     }"
     x-init="init()"
     @close-modal.window="stop()"
     class="space-y-4 pb-2"
 >
-    {{-- Camera --}}
-    <div class="relative overflow-hidden rounded-xl bg-black" style="aspect-ratio:4/3;">
-        <video
-            x-ref="video"
-            class="w-full h-full object-cover"
-            playsinline
-            muted
-        ></video>
-        <canvas x-ref="canvas" class="hidden"></canvas>
+    {{-- Scanner box --}}
+    <div x-show="!detected && !error" class="overflow-hidden rounded-xl bg-black">
+        <div id="qr-reader-box" style="width:100%;"></div>
+    </div>
 
-        {{-- Scanning overlay --}}
-        <div x-show="scanning" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div class="w-48 h-48 border-2 border-white rounded-xl opacity-60"></div>
-        </div>
+    {{-- Success --}}
+    <div
+        x-show="detected"
+        x-cloak
+        class="flex flex-col items-center gap-2 rounded-xl bg-success-50 dark:bg-success-950 border border-success-200 dark:border-success-800 p-6"
+    >
+        <x-heroicon-o-check-circle class="w-10 h-10 text-success-500"/>
+        <p class="text-sm font-semibold text-success-700 dark:text-success-300">ნაიძებნა:</p>
+        <p class="text-base font-bold text-success-900 dark:text-success-100" x-text="detected"></p>
+        <p class="text-xs text-success-600 dark:text-success-400">ცხრილი გაფილტრულია — შეგიძლია დახუროთ</p>
+    </div>
 
-        {{-- Detected --}}
-        <div
-            x-show="detected"
-            x-cloak
-            class="absolute inset-0 flex flex-col items-center justify-center bg-success-500/90 rounded-xl"
-        >
-            <x-heroicon-o-check-circle class="w-12 h-12 text-white mb-2"/>
-            <p class="text-white font-semibold text-sm" x-text="detected"></p>
-        </div>
-
-        {{-- Error --}}
-        <div
-            x-show="error"
-            x-cloak
-            class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 rounded-xl px-4"
-        >
-            <x-heroicon-o-exclamation-triangle class="w-10 h-10 text-danger-400 mb-2"/>
-            <p class="text-white text-sm text-center" x-text="error"></p>
-        </div>
+    {{-- Error --}}
+    <div
+        x-show="error"
+        x-cloak
+        class="flex flex-col items-center gap-2 rounded-xl bg-danger-50 dark:bg-danger-950 border border-danger-200 p-4"
+    >
+        <x-heroicon-o-exclamation-triangle class="w-8 h-8 text-danger-500"/>
+        <p class="text-sm text-center text-danger-700 dark:text-danger-300" x-text="error"></p>
     </div>
 
     {{-- Manual input --}}
