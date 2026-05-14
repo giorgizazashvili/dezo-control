@@ -112,7 +112,7 @@ class MonitoringResource extends Resource
                         ->get()
                         ->map(fn (ProductSettlementItem $item) => [
                             'settlement_component_id' => $item->settlement_component_id,
-                            'quantity' => $item->quantity,
+                            'quantity' => null,
                         ])
                         ->toArray();
                 })
