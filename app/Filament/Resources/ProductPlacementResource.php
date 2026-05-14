@@ -156,7 +156,15 @@ class ProductPlacementResource extends Resource
                     )),
             ])
             ->defaultSort('created_at', 'desc')
-            ->actions([
+            ->recordActions([
+                \Filament\Actions\Action::make('printQr')
+                    ->label('QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('info')
+                    ->url(fn (Movement $record) => route('print.qr-placement', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Movement $record) => $record->placementItems()->whereNotNull('unique_code')->exists()),
+
                 EditAction::make()->label('რედაქტირება'),
                 DeleteAction::make()->label('წაშლა'),
             ])

@@ -121,6 +121,17 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                     ->falseColor('gray'),
             ])
             ->recordActions([
+                Action::make('qr')
+                    ->label('QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('gray')
+                    ->url(fn (MovementProductPlacementItem $r) => $r->unique_code
+                        ? route('print.qr', $r->unique_code)
+                        : null
+                    )
+                    ->openUrlInNewTab()
+                    ->hidden(fn (MovementProductPlacementItem $r) => ! $r->unique_code),
+
                 Action::make('inspect')
                     ->label(fn (MovementProductPlacementItem $r) => in_array($r->product_settlement_id, $checkedProductSettlementIds) ? 'რედაქტირება' : 'შემოწმება')
                     ->icon(fn (MovementProductPlacementItem $r) => in_array($r->product_settlement_id, $checkedProductSettlementIds) ? 'heroicon-o-pencil' : 'heroicon-o-magnifying-glass')

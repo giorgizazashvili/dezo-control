@@ -28,8 +28,6 @@ class MovementService
         $this->checkComponentStock($required);
 
         $this->createConsumptionMovement($movement, $required);
-
-        $this->generateQrCodes($movement);
     }
 
     public function reverseProductReceipt(Movement $movement): void
@@ -240,15 +238,6 @@ class MovementService
                 'settlement_component_id' => $componentId,
                 'quantity' => $qty,
             ]);
-        }
-    }
-
-    private function generateQrCodes(Movement $movement): void
-    {
-        $movement->load('productItems');
-
-        foreach ($movement->productItems as $item) {
-            $item->update(['qr_code' => $this->generateQrSvg($item->uuid)]);
         }
     }
 }

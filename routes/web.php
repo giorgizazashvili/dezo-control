@@ -88,25 +88,29 @@ Route::get('/export/product-placement-template', function () {
     );
 })->name('export.product-placement-template');
 
-Route::get('/print/qr/{productSettlementId}', function (int $productSettlementId) {
-    $item = \App\Models\MovementProductItem::where('product_settlement_id', $productSettlementId)
-        ->whereNotNull('qr_code')
-        ->with('productSettlement.dimension')
-        ->latest('id')
-        ->firstOrFail();
-
-    $placementItem = \App\Models\MovementProductPlacementItem::where('product_settlement_id', $productSettlementId)
-        ->whereNotNull('unique_code')
-        ->latest('id')
-        ->first();
-
-    $product = $item->productSettlement;
-    $dimension = $product->dimension?->name ?? '';
-    $quantity = rtrim(rtrim(number_format((float) $item->quantity, 4, '.', ''), '0'), '.');
+Route::get('/print/qr/{uniqueCode}', function (string $uniqueCode) {
+    $movementService = app(\App\Services\MovementService::class);
 
     return view('print.qr-label', [
-        'qrCode' => $item->qr_code,
-        'uniqueCode' => $placementItem?->unique_code,
-        'qty' => $quantity.($dimension ? ' '.$dimension : ''),
+        'qrCode' => $movementService->generateQrSvg($uniqueCode),
+        'uniqueCode' => $uniqueCode,
     ]);
 })->name('print.qr');
+
+Route::get('/print/qr-placement/{movement}', function (\App\Models\Movement $movement) {
+    $movementService = app(\App\Services\MovementService::class);
+
+    $items = $movement->placementItems()
+        ->whereNotNull('unique_code')
+        ->with('productSettlement')
+        ->get()
+        ->map(fn ($item) => [
+            'uniqueCode' => $item->unique_code,
+            'name' => $item->productSettlement?->name ?? '',
+            'zone' => $item->zone,
+            'location' => $item->location,
+            'qrCode' => $movementService->generateQrSvg($item->unique_code),
+        ]);
+
+    return view('print.qr-placement', compact('items'));
+})->name('print.qr-placement');
