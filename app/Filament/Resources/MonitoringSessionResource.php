@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MonitoringSessionResource\Pages;
 use App\Models\MonitoringSession;
 use Filament\Actions\Action as TableRowAction;
+use Filament\Actions\DeleteAction as TableRowDeleteAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -96,6 +97,12 @@ class MonitoringSessionResource extends Resource
                     ->label('გახსნა')
                     ->icon('heroicon-o-arrow-right-circle')
                     ->url(fn (MonitoringSession $record) => Pages\ViewMonitoringSession::getUrl(['record' => $record])),
+
+                TableRowDeleteAction::make()
+                    ->label('წაშლა')
+                    ->modalHeading('სესიის წაშლა')
+                    ->modalDescription('დარწმუნებული ხართ? ამ სესიის ყველა მონიტორინგი წაიშლება.')
+                    ->modalSubmitActionLabel('წაშლა'),
             ]);
     }
 

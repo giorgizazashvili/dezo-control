@@ -8,6 +8,7 @@ use App\Models\Monitoring;
 use App\Models\Movement;
 use App\Models\MovementProductPlacementItem;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Tables;
@@ -71,6 +72,13 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                 ->icon('heroicon-o-arrow-left')
                 ->color('gray')
                 ->url(MonitoringSessionResource::getUrl('index')),
+
+            DeleteAction::make()
+                ->label('წაშლა')
+                ->modalHeading('სესიის წაშლა')
+                ->modalDescription('დარწმუნებული ხართ? ამ სესიის ყველა მონიტორინგი წაიშლება.')
+                ->modalSubmitActionLabel('წაშლა')
+                ->successRedirectUrl(MonitoringSessionResource::getUrl('index')),
         ];
     }
 
