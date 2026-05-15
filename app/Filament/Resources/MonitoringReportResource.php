@@ -40,6 +40,11 @@ class MonitoringReportResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('organization.name')
+                    ->label('ობიექტი')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('unique_code')
                     ->label('მოწყობილობის ID')
                     ->placeholder('—')
