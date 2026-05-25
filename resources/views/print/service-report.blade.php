@@ -225,6 +225,30 @@
     </tbody>
   </table>
 
+  <div class="sec-title">ინსპექციის შეჯამება:</div>
+  <table class="rpt">
+    <thead>
+      <tr>
+        <th style="width:36%; text-align:left">მოწყობილობის მიხედვით</th>
+        <th style="width:20%">მოწყობილობის ID</th>
+        <th style="width:28%">მავნებლის ტიპი</th>
+        <th style="width:16%">ჯამი</th>
+      </tr>
+    </thead>
+    <tbody>
+      @forelse ($pestSummary as $row)
+        <tr>
+          <td>{{ $row['device_name'] }}</td>
+          <td class="center">{{ $row['unique_code'] }}</td>
+          <td class="center">{{ $row['pest_type'] }}</td>
+          <td class="center">{{ $row['pest_quantity'] > 0 ? rtrim(rtrim(number_format($row['pest_quantity'], 4, '.', ''), '0'), '.') : '—' }}</td>
+        </tr>
+      @empty
+        <tr class="empty-row"><td colspan="4">ჩანაწერები არ არის</td></tr>
+      @endforelse
+    </tbody>
+  </table>
+
   <div class="sec-title">ინსპექტირება დეტალურად</div>
   <table class="rpt" style="font-size:9.5px;">
     <thead>
@@ -246,7 +270,7 @@
           <td class="center">{{ $row['unique_code'] }}</td>
           <td>{{ $row['location'] ?: '—' }}</td>
           <td>{{ $row['device_name'] }}</td>
-          <td class="center" style="background:#ffffa0;">{{ $row['bait_status'] }}</td>
+          <td class="center">{{ $row['bait_status'] }}</td>
           <td class="center">{{ $row['scan_time'] }}</td>
           <td class="center">{{ $row['scan_status'] }}</td>
           <td class="center">{{ $row['device_condition'] }}</td>
@@ -255,30 +279,6 @@
         </tr>
       @empty
         <tr class="empty-row"><td colspan="9">ჩანაწერები არ არის</td></tr>
-      @endforelse
-    </tbody>
-  </table>
-
-  <div class="sec-title">ინსპექციის შეჯამება:</div>
-  <table class="rpt">
-    <thead>
-      <tr>
-        <th style="width:36%; text-align:left">მოწყობილობის მიხედვით</th>
-        <th style="width:20%">მოწყობილობის ID</th>
-        <th style="width:28%">მავნებლის ტიპი</th>
-        <th style="width:16%">ჯამი</th>
-      </tr>
-    </thead>
-    <tbody>
-      @forelse ($pestSummary as $row)
-        <tr>
-          <td>{{ $row['device_name'] }}</td>
-          <td class="center">{{ $row['unique_code'] }}</td>
-          <td class="center">{{ $row['pest_type'] }}</td>
-          <td class="center">{{ $row['pest_quantity'] > 0 ? rtrim(rtrim(number_format($row['pest_quantity'], 4, '.', ''), '0'), '.') : '—' }}</td>
-        </tr>
-      @empty
-        <tr class="empty-row"><td colspan="4">ჩანაწერები არ არის</td></tr>
       @endforelse
     </tbody>
   </table>
