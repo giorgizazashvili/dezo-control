@@ -62,6 +62,30 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
         ])
         ->values();
 
+    $monitoringByUniqueCode = $session->monitorings
+        ->filter(fn ($m) => $m->logs->isNotEmpty() && $m->logs->first()?->unique_code)
+        ->keyBy(fn ($m) => $m->logs->first()->unique_code);
+
+    $inspectionDetails = $allPlacementItems
+        ->sortBy('unique_code')
+        ->map(function ($item) use ($monitoringByUniqueCode) {
+            $m = $monitoringByUniqueCode->get($item->unique_code);
+            $pq = $m && $m->pest_quantity ? rtrim(rtrim(number_format((float) $m->pest_quantity, 4, '.', ''), '0'), '.') : '';
+
+            return [
+                'unique_code' => $item->unique_code,
+                'location' => implode(', ', array_filter([$item->zone, $item->location])),
+                'device_name' => $item->productSettlement?->name ?? '—',
+                'bait_status' => $m?->bait_status ?? '',
+                'scan_time' => $m ? $m->created_at->format('H:i') : '',
+                'scan_status' => $m ? 'შემოწმდა' : 'არ შემოწმდა',
+                'device_condition' => $m?->action_taken ?? '',
+                'pest_quantity' => $pq,
+                'risk_level' => $m?->risk_level ?? '',
+            ];
+        })
+        ->values();
+
     $componentSummary = $session->monitorings
         ->flatMap(fn ($m) => $m->componentReplacements)
         ->filter(fn ($r) => (float) $r->quantity > 0)
@@ -75,7 +99,7 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
 
     $filename = 'service-report-'.$session->id.'.pdf';
 
-    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary', 'pestSummary'))
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary', 'pestSummary', 'inspectionDetails'))
         ->setPaper('a4')
         ->stream($filename);
 })->name('print.service-report.session');

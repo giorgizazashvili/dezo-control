@@ -225,6 +225,40 @@
     </tbody>
   </table>
 
+  <div class="sec-title">ინსპექტირება დეტალურად</div>
+  <table class="rpt" style="font-size:9.5px;">
+    <thead>
+      <tr>
+        <th style="width:8%">მოწყობილობის ID</th>
+        <th style="width:15%">ადგილმდებარეობა</th>
+        <th style="width:13%">მოწყობილობა</th>
+        <th style="width:13%">სატყუარას მდგომარეობა</th>
+        <th style="width:7%">სკანირების დრო</th>
+        <th style="width:10%">სკანირების სტატუსი</th>
+        <th style="width:14%">მოწყობილობის მდგომარეობა</th>
+        <th style="width:7%">რაოდენობა</th>
+        <th style="width:13%">რისკის დონე</th>
+      </tr>
+    </thead>
+    <tbody>
+      @forelse ($inspectionDetails as $row)
+        <tr>
+          <td class="center">{{ $row['unique_code'] }}</td>
+          <td>{{ $row['location'] ?: '—' }}</td>
+          <td>{{ $row['device_name'] }}</td>
+          <td class="center" style="background:#ffffa0;">{{ $row['bait_status'] }}</td>
+          <td class="center">{{ $row['scan_time'] }}</td>
+          <td class="center">{{ $row['scan_status'] }}</td>
+          <td class="center">{{ $row['device_condition'] }}</td>
+          <td class="center">{{ $row['pest_quantity'] }}</td>
+          <td class="center">{{ $row['risk_level'] }}</td>
+        </tr>
+      @empty
+        <tr class="empty-row"><td colspan="9">ჩანაწერები არ არის</td></tr>
+      @endforelse
+    </tbody>
+  </table>
+
   <div class="sec-title">ინსპექციის შეჯამება:</div>
   <table class="rpt">
     <thead>
