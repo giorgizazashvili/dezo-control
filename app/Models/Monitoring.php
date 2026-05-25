@@ -17,6 +17,8 @@ class Monitoring extends Model
         'pest_quantity',
         'bait_status',
         'action_taken',
+        'used_apparatus',
+        'pest_trace',
         'inspection_note',
         'inspection_photos',
         'risk_level',

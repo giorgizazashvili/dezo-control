@@ -182,6 +182,22 @@ class MonitoringResource extends Resource
                         ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
                         ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'action_taken', 'name' => $data['name']])->name),
 
+                    Select::make('used_apparatus')
+                        ->label('გამოყენებული აპარატი')
+                        ->options(fn () => MonitoringOption::where('type', 'used_apparatus')->pluck('name', 'name'))
+                        ->searchable()
+                        ->nullable()
+                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
+                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'used_apparatus', 'name' => $data['name']])->name),
+
+                    Select::make('pest_trace')
+                        ->label('მავნებლის კვალის დაფიქსირება')
+                        ->options(fn () => MonitoringOption::where('type', 'pest_trace')->pluck('name', 'name'))
+                        ->searchable()
+                        ->nullable()
+                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
+                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'pest_trace', 'name' => $data['name']])->name),
+
                     Textarea::make('inspection_note')
                         ->label('ინსპექციის შენიშვნა')
                         ->rows(2)
