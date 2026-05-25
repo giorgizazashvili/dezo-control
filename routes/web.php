@@ -16,15 +16,38 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
 
     $allLogs = $session->monitorings->flatMap(fn ($m) => $m->logs);
 
-    $deviceSummary = $session->monitorings
-        ->groupBy(fn ($m) => $m->movementProductItem?->productSettlement?->name ?? '—')
-        ->map(fn ($monitorings, $name) => [
-            'name' => $name,
-            'total' => $monitorings->count(),
-            'inspected' => $monitorings->filter(fn ($m) => $m->logs->isNotEmpty())->count(),
-            'active' => $monitorings->filter(fn ($m) => (float) $m->pest_quantity > 0)->count(),
-            'replaced' => $monitorings->filter(fn ($m) => $m->componentReplacements->filter(fn ($r) => (float) $r->quantity > 0)->isNotEmpty())->count(),
-        ])
+    $inspectedUniqueCodes = $allLogs->pluck('unique_code')->filter()->unique();
+
+    $pestQuantityByCode = $allLogs
+        ->filter(fn ($l) => $l->unique_code)
+        ->groupBy('unique_code')
+        ->map(fn ($logs) => $logs->sum(fn ($l) => (float) $l->pest_quantity));
+
+    $allPlacementItems = \App\Models\MovementProductPlacementItem::query()
+        ->whereHas('movement', fn ($q) => $q
+            ->where('organization_id', $session->organization_id)
+            ->where('operation_type', \App\Models\Movement::OPERATION_PRODUCT_PLACEMENT)
+        )
+        ->whereNotNull('unique_code')
+        ->with('productSettlement')
+        ->get();
+
+    $deviceSummary = $allPlacementItems
+        ->groupBy(fn ($item) => $item->productSettlement?->name ?? '—')
+        ->map(function ($items, $name) use ($inspectedUniqueCodes, $pestQuantityByCode) {
+            $total = $items->count();
+            $inspectedCount = $items->filter(fn ($item) => $inspectedUniqueCodes->contains($item->unique_code))->count();
+            $pestQuantity = $items->sum(fn ($item) => (float) ($pestQuantityByCode->get($item->unique_code) ?? 0));
+            $inspectedPct = $total > 0 ? round($inspectedCount / $total * 100, 1) : 0;
+
+            return [
+                'name' => $name,
+                'total' => $total,
+                'inspected_pct' => $inspectedPct,
+                'pest_quantity' => $pestQuantity,
+                'missed_pct' => round(100 - $inspectedPct, 1),
+            ];
+        })
         ->values();
 
     $pestLogs = $allLogs->filter(fn ($log) => $log->pest_type || (float) $log->pest_quantity > 0);

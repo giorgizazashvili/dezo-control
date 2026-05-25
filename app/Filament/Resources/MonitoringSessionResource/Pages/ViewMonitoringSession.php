@@ -5,6 +5,7 @@ namespace App\Filament\Resources\MonitoringSessionResource\Pages;
 use App\Filament\Resources\MonitoringResource;
 use App\Filament\Resources\MonitoringSessionResource;
 use App\Models\Monitoring;
+use App\Models\MonitoringLog;
 use App\Models\Movement;
 use App\Models\MovementProductPlacementItem;
 use Filament\Actions\Action;
@@ -95,6 +96,17 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
 
         $checkedProductSettlementIds = $checkedMonitorings->keys()->all();
 
+        $inspectedUniqueCodes = MonitoringLog::query()
+            ->whereIn('monitoring_id', $checkedMonitorings->map->id->values())
+            ->whereNotNull('unique_code')
+            ->pluck('unique_code')
+            ->flip();
+
+        $monitoringIdByUniqueCode = MonitoringLog::query()
+            ->whereIn('monitoring_id', $checkedMonitorings->map->id->values())
+            ->whereNotNull('unique_code')
+            ->pluck('monitoring_id', 'unique_code');
+
         return $table
             ->query(fn () => MovementProductPlacementItem::query()
                 ->whereHas('movement', fn (Builder $q) => $q
@@ -130,7 +142,13 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
 
                 IconColumn::make('checked')
                     ->label('სტატუსი')
-                    ->state(fn (MovementProductPlacementItem $r) => in_array($r->product_settlement_id, $checkedProductSettlementIds))
+                    ->state(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
+                        if ($r->unique_code) {
+                            return $inspectedUniqueCodes->has($r->unique_code);
+                        }
+
+                        return in_array($r->product_settlement_id, $checkedProductSettlementIds);
+                    })
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-ellipsis-horizontal-circle')
@@ -150,11 +168,41 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                     ->hidden(fn (MovementProductPlacementItem $r) => ! $r->unique_code),
 
                 Action::make('inspect')
-                    ->label(fn (MovementProductPlacementItem $r) => in_array($r->product_settlement_id, $checkedProductSettlementIds) ? 'რედაქტირება' : 'შემოწმება')
-                    ->icon(fn (MovementProductPlacementItem $r) => in_array($r->product_settlement_id, $checkedProductSettlementIds) ? 'heroicon-o-pencil' : 'heroicon-o-magnifying-glass')
-                    ->color(fn (MovementProductPlacementItem $r) => in_array($r->product_settlement_id, $checkedProductSettlementIds) ? 'gray' : 'primary')
-                    ->url(function (MovementProductPlacementItem $r) use ($session, $checkedMonitorings, $checkedProductSettlementIds) {
-                        if (in_array($r->product_settlement_id, $checkedProductSettlementIds)) {
+                    ->label(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
+                        $checked = $r->unique_code
+                            ? $inspectedUniqueCodes->has($r->unique_code)
+                            : in_array($r->product_settlement_id, $checkedProductSettlementIds);
+
+                        return $checked ? 'რედაქტირება' : 'შემოწმება';
+                    })
+                    ->icon(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
+                        $checked = $r->unique_code
+                            ? $inspectedUniqueCodes->has($r->unique_code)
+                            : in_array($r->product_settlement_id, $checkedProductSettlementIds);
+
+                        return $checked ? 'heroicon-o-pencil' : 'heroicon-o-magnifying-glass';
+                    })
+                    ->color(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
+                        $checked = $r->unique_code
+                            ? $inspectedUniqueCodes->has($r->unique_code)
+                            : in_array($r->product_settlement_id, $checkedProductSettlementIds);
+
+                        return $checked ? 'gray' : 'primary';
+                    })
+                    ->url(function (MovementProductPlacementItem $r) use ($session, $checkedMonitorings, $checkedProductSettlementIds, $inspectedUniqueCodes, $monitoringIdByUniqueCode) {
+                        $checked = $r->unique_code
+                            ? $inspectedUniqueCodes->has($r->unique_code)
+                            : in_array($r->product_settlement_id, $checkedProductSettlementIds);
+
+                        if ($checked) {
+                            if ($r->unique_code) {
+                                $monitoringId = $monitoringIdByUniqueCode->get($r->unique_code);
+
+                                return $monitoringId
+                                    ? MonitoringResource::getUrl('edit', ['record' => $monitoringId])
+                                    : null;
+                            }
+
                             $monitoring = $checkedMonitorings->get($r->product_settlement_id);
 
                             return $monitoring

@@ -203,11 +203,11 @@
   <table class="rpt">
     <thead>
       <tr>
-        <th style="width:38%; text-align:left">მოწყობილობის ტიპი</th>
-        <th style="width:15%">რ-ბა</th>
-        <th style="width:15%">შემოწმებული</th>
-        <th style="width:16%">აქტიური</th>
-        <th style="width:16%">გამოცვლილი</th>
+        <th style="width:36%; text-align:left">მოწყობილობის მიხედვით</th>
+        <th style="width:16%">მოწყობილობის რ-ბა</th>
+        <th style="width:16%">შემოწმებული %</th>
+        <th style="width:16%">მავნებლის რაოდენობა</th>
+        <th style="width:16%">გამოტოვებული %</th>
       </tr>
     </thead>
     <tbody>
@@ -215,9 +215,9 @@
         <tr>
           <td>{{ $row['name'] }}</td>
           <td class="center">{{ $row['total'] }}</td>
-          <td class="center">{{ $row['inspected'] }}</td>
-          <td class="center">{{ $row['active'] ?: '—' }}</td>
-          <td class="center">{{ $row['replaced'] ?: '—' }}</td>
+          <td class="center">{{ $row['inspected_pct'] }}%</td>
+          <td class="center">{{ $row['pest_quantity'] > 0 ? rtrim(rtrim(number_format($row['pest_quantity'], 4, '.', ''), '0'), '.') : '—' }}</td>
+          <td class="center">{{ $row['missed_pct'] }}%</td>
         </tr>
       @empty
         <tr class="empty-row"><td colspan="5">ჩანაწერები არ არის</td></tr>
