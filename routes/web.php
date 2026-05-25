@@ -52,6 +52,16 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
 
     $pestLogs = $allLogs->filter(fn ($log) => $log->pest_type || (float) $log->pest_quantity > 0);
 
+    $pestSummary = $session->monitorings
+        ->filter(fn ($m) => $m->pest_type)
+        ->map(fn ($m) => [
+            'device_name' => $m->movementProductItem?->productSettlement?->name ?? '—',
+            'unique_code' => $m->logs->first()?->unique_code ?? '—',
+            'pest_type' => $m->pest_type,
+            'pest_quantity' => (float) $m->pest_quantity,
+        ])
+        ->values();
+
     $componentSummary = $session->monitorings
         ->flatMap(fn ($m) => $m->componentReplacements)
         ->filter(fn ($r) => (float) $r->quantity > 0)
@@ -65,7 +75,7 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
 
     $filename = 'service-report-'.$session->id.'.pdf';
 
-    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary'))
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary', 'pestSummary'))
         ->setPaper('a4')
         ->stream($filename);
 })->name('print.service-report.session');

@@ -225,6 +225,30 @@
     </tbody>
   </table>
 
+  <div class="sec-title">ინსპექციის შეჯამება:</div>
+  <table class="rpt">
+    <thead>
+      <tr>
+        <th style="width:36%; text-align:left">მოწყობილობის მიხედვით</th>
+        <th style="width:20%">მოწყობილობის ID</th>
+        <th style="width:28%">მავნებლის ტიპი</th>
+        <th style="width:16%">ჯამი</th>
+      </tr>
+    </thead>
+    <tbody>
+      @forelse ($pestSummary as $row)
+        <tr>
+          <td>{{ $row['device_name'] }}</td>
+          <td class="center">{{ $row['unique_code'] }}</td>
+          <td class="center">{{ $row['pest_type'] }}</td>
+          <td class="center">{{ $row['pest_quantity'] > 0 ? rtrim(rtrim(number_format($row['pest_quantity'], 4, '.', ''), '0'), '.') : '—' }}</td>
+        </tr>
+      @empty
+        <tr class="empty-row"><td colspan="4">ჩანაწერები არ არის</td></tr>
+      @endforelse
+    </tbody>
+  </table>
+
   @if($componentSummary->isNotEmpty())
     <div class="sec-title">გამოყენებული კომპონენტები</div>
     <table class="rpt">
@@ -247,29 +271,6 @@
     </table>
   @endif
 
-  @if($pestLogs->isNotEmpty())
-    <div class="sec-title">მავნებლების ფიქსაცია</div>
-    <table class="rpt">
-      <thead>
-        <tr>
-          <th style="width:35%; text-align:left">მოწყობილობა</th>
-          <th style="width:20%">ID</th>
-          <th style="width:25%">მავნებლის ტიპი</th>
-          <th style="width:20%">რაოდენობა</th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach ($pestLogs as $log)
-          <tr>
-            <td>{{ $log->movementProductItem?->productSettlement?->name ?? '—' }}</td>
-            <td class="center">{{ $log->unique_code ?? '—' }}</td>
-            <td class="center">{{ $log->pest_type ?? '—' }}</td>
-            <td class="center">{{ $log->pest_quantity ? rtrim(rtrim(number_format((float) $log->pest_quantity, 4, '.', ''), '0'), '.') : '—' }}</td>
-          </tr>
-        @endforeach
-      </tbody>
-    </table>
-  @endif
 
   @if ($session->notes)
     <div class="sec-title">შენიშვნა</div>
