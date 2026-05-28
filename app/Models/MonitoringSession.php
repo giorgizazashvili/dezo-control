@@ -14,6 +14,7 @@ class MonitoringSession extends Model
         'started_at',
         'finished_at',
         'notes',
+        'photos',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class MonitoringSession extends Model
         return [
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            'photos' => 'array',
         ];
     }
 

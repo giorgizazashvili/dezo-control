@@ -11,6 +11,8 @@ use App\Models\MovementProductPlacementItem;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -49,6 +51,37 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                 ])
                 ->action(function (array $data) {
                     $this->record->update(['finished_at' => $data['finished_at']]);
+                    $this->record->refresh();
+                }),
+
+            Action::make('editNotes')
+                ->label('კომენტარი / ფოტო')
+                ->icon('heroicon-o-pencil-square')
+                ->color('gray')
+                ->modalHeading('კომენტარი და ფოტოები')
+                ->schema([
+                    Textarea::make('notes')
+                        ->label('კომენტარი')
+                        ->rows(4)
+                        ->nullable(),
+                    FileUpload::make('photos')
+                        ->label('ფოტოები')
+                        ->multiple()
+                        ->image()
+                        ->disk('public')
+                        ->directory('monitoring-sessions')
+                        ->nullable()
+                        ->columnSpanFull(),
+                ])
+                ->fillForm(fn () => [
+                    'notes' => $this->record->notes,
+                    'photos' => $this->record->photos,
+                ])
+                ->action(function (array $data): void {
+                    $this->record->update([
+                        'notes' => $data['notes'],
+                        'photos' => $data['photos'] ?? [],
+                    ]);
                     $this->record->refresh();
                 }),
 
