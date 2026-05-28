@@ -44,6 +44,9 @@ class MonitoringResource extends Resource
             Hidden::make('monitoring_session_id')
                 ->default(fn () => request()->query('session_id')),
 
+            Hidden::make('movement_product_placement_item_id')
+                ->default(fn () => request()->query('placement_item_id')),
+
             Hidden::make('movement_product_item_id')
                 ->default(function () {
                     $placementItemId = request()->query('placement_item_id');

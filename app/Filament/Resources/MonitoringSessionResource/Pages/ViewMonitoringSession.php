@@ -120,25 +120,31 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
     {
         $session = $this->record;
 
-        $checkedMonitorings = Monitoring::query()
+        $allMonitorings = Monitoring::query()
             ->where('monitoring_session_id', $session->id)
             ->with('movementProductItem:id,product_settlement_id')
             ->get()
-            ->filter(fn ($m) => $m->movementProductItem)
-            ->keyBy(fn ($m) => $m->movementProductItem->product_settlement_id);
+            ->filter(fn ($m) => $m->movementProductItem);
 
-        $checkedProductSettlementIds = $checkedMonitorings->keys()->all();
+        $allMonitoringIds = $allMonitorings->pluck('id');
 
         $inspectedUniqueCodes = MonitoringLog::query()
-            ->whereIn('monitoring_id', $checkedMonitorings->map->id->values())
+            ->whereIn('monitoring_id', $allMonitoringIds)
             ->whereNotNull('unique_code')
             ->pluck('unique_code')
             ->flip();
 
         $monitoringIdByUniqueCode = MonitoringLog::query()
-            ->whereIn('monitoring_id', $checkedMonitorings->map->id->values())
+            ->whereIn('monitoring_id', $allMonitoringIds)
             ->whereNotNull('unique_code')
             ->pluck('monitoring_id', 'unique_code');
+
+        $checkedProductSettlementIds = $allMonitorings
+            ->pluck('movementProductItem.product_settlement_id')
+            ->all();
+
+        $monitoringByProductSettlementId = $allMonitorings
+            ->keyBy(fn ($m) => $m->movementProductItem->product_settlement_id);
 
         return $table
             ->query(fn () => MovementProductPlacementItem::query()
@@ -222,7 +228,7 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
 
                         return $checked ? 'gray' : 'primary';
                     })
-                    ->url(function (MovementProductPlacementItem $r) use ($session, $checkedMonitorings, $checkedProductSettlementIds, $inspectedUniqueCodes, $monitoringIdByUniqueCode) {
+                    ->url(function (MovementProductPlacementItem $r) use ($session, $monitoringByProductSettlementId, $checkedProductSettlementIds, $inspectedUniqueCodes, $monitoringIdByUniqueCode) {
                         $checked = $r->unique_code
                             ? $inspectedUniqueCodes->has($r->unique_code)
                             : in_array($r->product_settlement_id, $checkedProductSettlementIds);
@@ -236,7 +242,7 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                                     : null;
                             }
 
-                            $monitoring = $checkedMonitorings->get($r->product_settlement_id);
+                            $monitoring = $monitoringByProductSettlementId->get($r->product_settlement_id);
 
                             return $monitoring
                                 ? MonitoringResource::getUrl('edit', ['record' => $monitoring])

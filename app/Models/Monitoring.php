@@ -11,6 +11,7 @@ class Monitoring extends Model
     protected $fillable = [
         'monitoring_session_id',
         'movement_product_item_id',
+        'movement_product_placement_item_id',
         'qr_data',
         'notes',
         'pest_type',
@@ -39,6 +40,11 @@ class Monitoring extends Model
     public function movementProductItem(): BelongsTo
     {
         return $this->belongsTo(MovementProductItem::class);
+    }
+
+    public function movementProductPlacementItem(): BelongsTo
+    {
+        return $this->belongsTo(MovementProductPlacementItem::class);
     }
 
     public function componentReplacements(): HasMany

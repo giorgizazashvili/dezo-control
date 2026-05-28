@@ -225,11 +225,12 @@ class MonitoringService
 
     private function writeLog(Monitoring $monitoring, array $required): void
     {
-        $monitoring->loadMissing('movementProductItem.productSettlement', 'monitoringSession');
+        $monitoring->loadMissing('movementProductItem.productSettlement', 'monitoringSession', 'movementProductPlacementItem');
 
-        $placementItem = $monitoring->movementProductItem
-            ? $this->getPlacementItem($monitoring->movementProductItem->product_settlement_id)
-            : null;
+        $placementItem = $monitoring->movementProductPlacementItem
+            ?? ($monitoring->movementProductItem
+                ? $this->getPlacementItem($monitoring->movementProductItem->product_settlement_id)
+                : null);
 
         $base = [
             'monitoring_id' => $monitoring->id,
