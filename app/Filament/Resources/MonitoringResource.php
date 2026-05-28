@@ -173,6 +173,7 @@ class MonitoringResource extends Resource
                         ->options(fn () => MonitoringOption::where('type', 'risk_level')->pluck('name', 'name'))
                         ->searchable()
                         ->nullable()
+                        ->default('დაბალი')
                         ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
                         ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'risk_level', 'name' => $data['name']])->name),
 
