@@ -56,7 +56,9 @@ class MonitoringSessionResource extends Resource
                 ->label('დაწყების დრო')
                 ->default(now())
                 ->required()
+                ->native(false)
                 ->seconds(false)
+                ->displayFormat('d/m/Y H:i')
                 ->columnSpanFull(),
         ]);
     }

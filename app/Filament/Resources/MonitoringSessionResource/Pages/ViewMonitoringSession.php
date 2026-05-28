@@ -47,7 +47,9 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                         ->label('დასრულების დრო')
                         ->default(now())
                         ->required()
-                        ->seconds(false),
+                        ->native(false)
+                        ->seconds(false)
+                        ->displayFormat('d/m/Y H:i'),
                 ])
                 ->action(function (array $data) {
                     $this->record->update(['finished_at' => $data['finished_at']]);
