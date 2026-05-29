@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\Role;
+use App\Filament\Forms\Components\SignaturePad;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -38,6 +39,10 @@ class UserForm
                     ->options(collect(Role::cases())->mapWithKeys(fn (Role $r) => [$r->value => $r->label()]))
                     ->required()
                     ->default(Role::Technician->value),
+
+                SignaturePad::make('signature')
+                    ->label('ხელმოწერა')
+                    ->columnSpanFull(),
             ]);
     }
 }

@@ -36,6 +36,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         FilamentView::registerRenderHook(
+            PanelsRenderHook::SCRIPTS_AFTER,
+            fn (): string => '<script src="https://cdn.jsdelivr.net/npm/signature_pad@4/dist/signature_pad.umd.min.js"></script>',
+        );
+
+        FilamentView::registerRenderHook(
             PanelsRenderHook::STYLES_AFTER,
             fn (): string => '<style>
                 .fi-simple-layout {
