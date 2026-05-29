@@ -23,6 +23,7 @@ class Monitoring extends Model
         'inspection_note',
         'inspection_photos',
         'risk_level',
+        'scanned_at',
     ];
 
     protected function casts(): array

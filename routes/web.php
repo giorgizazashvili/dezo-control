@@ -78,7 +78,7 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
                 'location' => implode(', ', array_filter([$item->zone, $item->location])),
                 'device_name' => $item->productSettlement?->name ?? '—',
                 'bait_status' => $m?->bait_status ?? '',
-                'scan_time' => $m ? $m->created_at->format('H:i') : '',
+                'scan_time' => $m ? ($m->scanned_at ? \Carbon\Carbon::parse($m->scanned_at)->format('H:i') : $m->created_at->format('H:i')) : '',
                 'scan_status' => $m ? 'შემოწმდა' : 'არ შემოწმდა',
                 'device_condition' => $m?->action_taken ?? '',
                 'pest_quantity' => $pq,

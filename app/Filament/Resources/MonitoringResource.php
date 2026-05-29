@@ -17,6 +17,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -146,6 +147,14 @@ class MonitoringResource extends Resource
 
             Section::make('ინსპექციის მონაცემები')
                 ->schema([
+                    TimePicker::make('scanned_at')
+                        ->label('სკანირების დრო')
+                        ->default(fn () => now()->format('H:i'))
+                        ->seconds(false)
+                        ->native(false)
+                        ->nullable()
+                        ->columnSpanFull(),
+
                     Select::make('pest_type')
                         ->label('მავნებლის ტიპი')
                         ->options(fn () => MonitoringOption::where('type', 'pest_type')->pluck('name', 'name'))
