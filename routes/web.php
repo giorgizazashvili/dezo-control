@@ -7,6 +7,7 @@ Route::get('/', function () {
 });
 
 Route::get('/print/service-report/session/{session}', function (\App\Models\MonitoringSession $session) {
+    $user = auth()->user();
     $session->load([
         'organization',
         'monitorings.movementProductItem.productSettlement',
@@ -99,7 +100,7 @@ Route::get('/print/service-report/session/{session}', function (\App\Models\Moni
 
     $filename = 'service-report-'.$session->id.'.pdf';
 
-    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary', 'pestSummary', 'inspectionDetails'))
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.service-report', compact('session', 'deviceSummary', 'pestLogs', 'componentSummary', 'pestSummary', 'inspectionDetails', 'user'))
         ->setPaper('a4')
         ->stream($filename);
 })->name('print.service-report.session');

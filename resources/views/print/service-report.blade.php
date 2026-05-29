@@ -137,6 +137,27 @@
       height: 16px;
       vertical-align: bottom;
     }
+    .signature-name-value {
+      display: inline-block;
+      width: 200px;
+      border-bottom: 1px solid #000;
+      height: 16px;
+      vertical-align: bottom;
+      font-size: 11px;
+      padding: 0 3px 1px;
+    }
+    .signature-img-wrap {
+      display: inline-block;
+      width: 200px;
+      border-bottom: 1px solid #000;
+      vertical-align: bottom;
+      text-align: center;
+      line-height: 0;
+    }
+    .signature-img {
+      max-width: 190px;
+      max-height: 72px;
+    }
   </style>
 </head>
 @php
@@ -317,11 +338,19 @@
         <div class="signature-label">მომსახურების გამწევი:</div>
         <div class="signature-line">
           <span class="signature-line-lbl">სახელი/გვარი</span>
-          <span class="signature-line-underline"></span>
+          @if($user?->name)
+            <span class="signature-name-value">{{ $user->name }}</span>
+          @else
+            <span class="signature-line-underline"></span>
+          @endif
         </div>
         <div class="signature-line">
           <span class="signature-line-lbl">ხელმოწერა</span>
-          <span class="signature-line-underline"></span>
+          @if($user?->signature)
+            <span class="signature-img-wrap"><img class="signature-img" src="{{ $user->signature }}"></span>
+          @else
+            <span class="signature-line-underline"></span>
+          @endif
         </div>
       </td>
       <td class="signature-col">
