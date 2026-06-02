@@ -23,7 +23,7 @@ class ComponentBalanceWidget extends TableWidget
 
     protected function getTableQuery(): Builder
     {
-        $receipt     = Movement::OPERATION_COMPONENT_RECEIPT;
+        $receipt = Movement::OPERATION_COMPONENT_RECEIPT;
         $consumption = Movement::OPERATION_COMPONENT_CONSUMPTION;
 
         return SettlementComponent::query()
@@ -53,7 +53,7 @@ class ComponentBalanceWidget extends TableWidget
             ->columns([
                 TextColumn::make('name')
                     ->label('კომპონენტი')
-                    ->searchable()
+                    ->searchable(['settlement_components.name'])
                     ->sortable(),
 
                 TextColumn::make('dimension_name')
