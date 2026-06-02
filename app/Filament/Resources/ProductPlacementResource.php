@@ -158,10 +158,18 @@ class ProductPlacementResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->recordActions([
                 \Filament\Actions\Action::make('printQr')
-                    ->label('QR')
+                    ->label('QR (თერმული)')
                     ->icon('heroicon-o-qr-code')
                     ->color('info')
                     ->url(fn (Movement $record) => route('print.qr-placement', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Movement $record) => $record->placementItems()->whereNotNull('unique_code')->exists()),
+
+                \Filament\Actions\Action::make('printQrA4')
+                    ->label('QR (A4)')
+                    ->icon('heroicon-o-document')
+                    ->color('gray')
+                    ->url(fn (Movement $record) => route('print.qr-placement-a4', $record))
                     ->openUrlInNewTab()
                     ->visible(fn (Movement $record) => $record->placementItems()->whereNotNull('unique_code')->exists()),
 

@@ -13,13 +13,12 @@
 
         @page {
             size: 56mm 40mm;
-            margin: 0;
+            margin: 0mm;
         }
 
         html, body {
             width: 56mm;
             height: 40mm;
-            max-height: 40mm;
             overflow: hidden;
             background: #fff;
             -webkit-print-color-adjust: exact;
@@ -33,45 +32,42 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 1.5mm;
+            padding: 1mm;
+            gap: 1mm;
             overflow: hidden;
+        }
+
+        .qr {
+            flex-shrink: 0;
         }
 
         .qr svg {
             display: block;
-            width: 24mm !important;
-            height: 24mm !important;
+            width: 32mm !important;
+            height: 32mm !important;
         }
 
-        .name {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 6pt;
+        .unique-code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 7pt;
             font-weight: 700;
+            color: #000;
             text-align: center;
+            letter-spacing: 0.5px;
+            word-break: break-all;
             line-height: 1.2;
             width: 54mm;
-            word-break: break-word;
-            color: #000;
-        }
-
-        .qty {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 5.5pt;
-            font-weight: 400;
-            text-align: center;
-            color: #000;
         }
 
         @media print {
             @page {
                 size: 56mm 40mm;
-                margin: 0;
+                margin: 0mm;
             }
 
             html, body {
                 width: 56mm !important;
                 height: 40mm !important;
-                max-height: 40mm !important;
                 overflow: hidden !important;
             }
         }
@@ -81,7 +77,7 @@
     <div class="label">
         <div class="qr">{!! $qrCode !!}</div>
         @if($uniqueCode)
-            <div class="name">{{ $uniqueCode }}</div>
+            <div class="unique-code">{{ $uniqueCode }}</div>
         @endif
     </div>
 </body>
