@@ -6,6 +6,8 @@ Route::get('/', function () {
     return redirect('app');
 });
 
+Route::middleware('auth')->group(function () {
+
 Route::get('/print/service-report/session/{session}', function (\App\Models\MonitoringSession $session) {
     $user = auth()->user();
     $session->load([
@@ -172,3 +174,5 @@ Route::get('/print/qr-placement/{movement}', function (\App\Models\Movement $mov
 
     return view('print.qr-placement', compact('items'));
 })->name('print.qr-placement');
+
+}); // end auth middleware group

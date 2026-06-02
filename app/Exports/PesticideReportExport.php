@@ -23,12 +23,12 @@ class PesticideReportExport implements FromQuery, ShouldAutoSize, WithHeadings, 
     {
         return MonitoringComponentReplacement::query()
             ->with([
-                'monitoring.organization',
+                'monitoring.monitoringSession.organization',
                 'monitoring.movementProductItem.productSettlement',
                 'settlementComponent.dimension',
             ])
             ->when($this->organizationId, fn ($q) => $q->whereHas(
-                'monitoring', fn ($mq) => $mq->where('organization_id', $this->organizationId)
+                'monitoring.monitoringSession', fn ($mq) => $mq->where('organization_id', $this->organizationId)
             ))
             ->when($this->from, fn ($q) => $q->whereHas(
                 'monitoring', fn ($mq) => $mq->whereDate('created_at', '>=', $this->from)
@@ -67,7 +67,7 @@ class PesticideReportExport implements FromQuery, ShouldAutoSize, WithHeadings, 
             $row->settlementComponent?->dimension?->name ?? '',
             $row->monitoring?->action_taken ?? '',
             $row->monitoring?->movementProductItem?->productSettlement?->name ?? '',
-            $row->monitoring?->organization?->name ?? '',
+            $row->monitoring?->monitoringSession?->organization?->name ?? '',
             $row->monitoring?->created_at ? Carbon::parse($row->monitoring->created_at)->format('d.m.Y H:i') : '',
         ];
     }

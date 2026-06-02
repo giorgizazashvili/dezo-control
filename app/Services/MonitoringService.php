@@ -12,6 +12,7 @@ use App\Models\MovementProductItem;
 use App\Models\MovementProductPlacementItem;
 use App\Models\ProductSettlementItem;
 use App\Models\SettlementComponent;
+use Illuminate\Support\Facades\DB;
 
 class MonitoringService
 {
@@ -302,17 +303,19 @@ class MonitoringService
 
     private function createMonitoringConsumption(Monitoring $monitoring, array $required): void
     {
-        $consumption = Movement::create([
-            'operation_type' => Movement::OPERATION_COMPONENT_CONSUMPTION,
-            'source_monitoring_id' => $monitoring->id,
-        ]);
-
-        foreach ($required as $componentId => $qty) {
-            MovementComponentItem::create([
-                'movement_id' => $consumption->id,
-                'settlement_component_id' => $componentId,
-                'quantity' => $qty,
+        DB::transaction(function () use ($monitoring, $required) {
+            $consumption = Movement::create([
+                'operation_type' => Movement::OPERATION_COMPONENT_CONSUMPTION,
+                'source_monitoring_id' => $monitoring->id,
             ]);
-        }
+
+            foreach ($required as $componentId => $qty) {
+                MovementComponentItem::create([
+                    'movement_id' => $consumption->id,
+                    'settlement_component_id' => $componentId,
+                    'quantity' => $qty,
+                ]);
+            }
+        });
     }
 }

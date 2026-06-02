@@ -12,6 +12,7 @@ use App\Models\SettlementComponent;
 use chillerlan\QRCode\Output\QROutputInterface;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use Illuminate\Support\Facades\DB;
 
 class MovementService
 {
@@ -227,17 +228,19 @@ class MovementService
 
     private function createConsumptionMovement(Movement $movement, array $required): void
     {
-        $consumption = Movement::create([
-            'operation_type' => Movement::OPERATION_COMPONENT_CONSUMPTION,
-            'source_movement_id' => $movement->id,
-        ]);
-
-        foreach ($required as $componentId => $qty) {
-            MovementComponentItem::create([
-                'movement_id' => $consumption->id,
-                'settlement_component_id' => $componentId,
-                'quantity' => $qty,
+        DB::transaction(function () use ($movement, $required) {
+            $consumption = Movement::create([
+                'operation_type' => Movement::OPERATION_COMPONENT_CONSUMPTION,
+                'source_movement_id' => $movement->id,
             ]);
-        }
+
+            foreach ($required as $componentId => $qty) {
+                MovementComponentItem::create([
+                    'movement_id' => $consumption->id,
+                    'settlement_component_id' => $componentId,
+                    'quantity' => $qty,
+                ]);
+            }
+        });
     }
 }

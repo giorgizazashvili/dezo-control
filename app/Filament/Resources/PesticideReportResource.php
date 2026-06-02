@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\Concerns\RestrictedToOfficeManager;
 use App\Filament\Resources\PesticideReportResource\Pages;
 use App\Models\MonitoringComponentReplacement;
+use App\Models\Organization;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -41,7 +42,7 @@ class PesticideReportResource extends Resource
         return $table
             ->modifyQueryUsing(fn ($query) => $query
                 ->with([
-                    'monitoring.organization',
+                    'monitoring.monitoringSession.organization',
                     'monitoring.movementProductItem.productSettlement',
                     'settlementComponent.dimension',
                 ])
@@ -78,7 +79,7 @@ class PesticideReportResource extends Resource
                     ->label('მოწყობილობა')
                     ->placeholder('—'),
 
-                TextColumn::make('monitoring.organization.name')
+                TextColumn::make('monitoring.monitoringSession.organization.name')
                     ->label('ობიექტი')
                     ->placeholder('—'),
 
@@ -91,9 +92,12 @@ class PesticideReportResource extends Resource
             ->filters([
                 SelectFilter::make('organization')
                     ->label('ობიექტი')
-                    ->relationship('monitoring.organization', 'name')
+                    ->options(fn () => Organization::orderBy('name')->pluck('name', 'id'))
                     ->searchable()
-                    ->preload(),
+                    ->query(fn ($query, array $data) => $data['value']
+                        ? $query->whereHas('monitoring.monitoringSession', fn ($q) => $q->where('organization_id', $data['value']))
+                        : $query
+                    ),
 
                 Filter::make('created_at')
                     ->label('თარიღის მიხედვით')
