@@ -30,22 +30,37 @@
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
-            fileInput.capture = 'environment';
+            fileInput.setAttribute('capture', 'environment');
+            fileInput.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
+            document.body.appendChild(fileInput);
+
             fileInput.onchange = async (e) => {
                 const file = e.target.files[0];
+                document.body.removeChild(fileInput);
                 if (!file) return;
 
                 this.scanning = true;
 
                 try {
-                    const bitmap = await createImageBitmap(file);
-                    const canvas = document.createElement('canvas');
-                    canvas.width = bitmap.width;
-                    canvas.height = bitmap.height;
-                    canvas.getContext('2d').drawImage(bitmap, 0, 0);
-                    const imgData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-                    const code = jsQR(imgData.data, imgData.width, imgData.height);
+                    const imgData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onerror = reject;
+                        reader.onload = (ev) => {
+                            const img = new Image();
+                            img.onerror = reject;
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                canvas.getContext('2d').drawImage(img, 0, 0);
+                                resolve(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
+                            };
+                            img.src = ev.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
 
+                    const code = jsQR(imgData.data, imgData.width, imgData.height);
                     if (code) {
                         $wire.set('{{ $wireModel }}', code.data);
                     }
