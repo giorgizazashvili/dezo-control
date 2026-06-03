@@ -17,6 +17,7 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -149,6 +150,21 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                 ->orderByDesc('id')
             )
             ->columns([
+                IconColumn::make('checked')
+                    ->label('სტატუსი')
+                    ->state(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
+                        if ($r->unique_code) {
+                            return $inspectedUniqueCodes->has($r->unique_code);
+                        }
+
+                        return in_array($r->product_settlement_id, $checkedProductSettlementIds);
+                    })
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-ellipsis-horizontal-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
+
                 TextColumn::make('productSettlement.name')
                     ->label('მოწყობილობა')
                     ->searchable(),
@@ -171,22 +187,8 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                     ->label('მდებარეობა')
                     ->placeholder('—')
                     ->searchable(),
-
-                IconColumn::make('checked')
-                    ->label('სტატუსი')
-                    ->state(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
-                        if ($r->unique_code) {
-                            return $inspectedUniqueCodes->has($r->unique_code);
-                        }
-
-                        return in_array($r->product_settlement_id, $checkedProductSettlementIds);
-                    })
-                    ->boolean()
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-ellipsis-horizontal-circle')
-                    ->trueColor('success')
-                    ->falseColor('gray'),
             ])
+            ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->recordActions([
                 Action::make('qr')
                     ->label('QR')
