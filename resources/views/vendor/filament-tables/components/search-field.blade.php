@@ -34,6 +34,8 @@
             fileInput.style.cssText = 'position:fixed;top:-9999px;opacity:0;';
             document.body.appendChild(fileInput);
 
+            const wire = this.$wire;
+
             fileInput.onchange = async (e) => {
                 const file = e.target.files[0];
                 document.body.removeChild(fileInput);
@@ -49,11 +51,18 @@
                             const img = new Image();
                             img.onerror = reject;
                             img.onload = () => {
+                                const MAX = 1280;
+                                let w = img.width, h = img.height;
+                                if (w > MAX || h > MAX) {
+                                    const r = Math.min(MAX / w, MAX / h);
+                                    w = Math.round(w * r);
+                                    h = Math.round(h * r);
+                                }
                                 const canvas = document.createElement('canvas');
-                                canvas.width = img.width;
-                                canvas.height = img.height;
-                                canvas.getContext('2d').drawImage(img, 0, 0);
-                                resolve(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
+                                canvas.width = w;
+                                canvas.height = h;
+                                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                                resolve(canvas.getContext('2d').getImageData(0, 0, w, h));
                             };
                             img.src = ev.target.result;
                         };
@@ -62,7 +71,9 @@
 
                     const code = jsQR(imgData.data, imgData.width, imgData.height);
                     if (code) {
-                        $wire.set('{{ $wireModel }}', code.data);
+                        wire.set('{{ $wireModel }}', code.data);
+                    } else {
+                        alert('QR კოდი ვერ ამოიცნო — სცადე ახლოდან ან გასწორებული კუთხით.');
                     }
                 } finally {
                     this.scanning = false;
