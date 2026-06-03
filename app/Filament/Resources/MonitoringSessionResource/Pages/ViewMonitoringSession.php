@@ -165,6 +165,19 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                     ->trueColor('success')
                     ->falseColor('gray'),
 
+                TextColumn::make('unique_code_qr')
+                    ->label('QR')
+                    ->state(fn (MovementProductPlacementItem $r) => $r->unique_code ? 'QR' : null)
+                    ->icon('heroicon-o-qr-code')
+                    ->badge()
+                    ->color('gray')
+                    ->url(fn (MovementProductPlacementItem $r) => $r->unique_code
+                        ? route('print.qr', $r->unique_code)
+                        : null
+                    )
+                    ->openUrlInNewTab()
+                    ->placeholder(''),
+
                 TextColumn::make('productSettlement.name')
                     ->label('მოწყობილობა')
                     ->searchable(),
@@ -190,17 +203,6 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
             ])
             ->recordActionsPosition(RecordActionsPosition::BeforeColumns)
             ->recordActions([
-                Action::make('qr')
-                    ->label('QR')
-                    ->icon('heroicon-o-qr-code')
-                    ->color('gray')
-                    ->url(fn (MovementProductPlacementItem $r) => $r->unique_code
-                        ? route('print.qr', $r->unique_code)
-                        : null
-                    )
-                    ->openUrlInNewTab()
-                    ->hidden(fn (MovementProductPlacementItem $r) => ! $r->unique_code),
-
                 Action::make('inspect')
                     ->label(function (MovementProductPlacementItem $r) use ($inspectedUniqueCodes, $checkedProductSettlementIds) {
                         $checked = $r->unique_code
@@ -249,6 +251,7 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                             'placement_item_id' => $r->id,
                         ]);
                     }),
+
             ]);
     }
 }
