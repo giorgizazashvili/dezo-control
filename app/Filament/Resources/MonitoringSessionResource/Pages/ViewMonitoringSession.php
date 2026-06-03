@@ -87,15 +87,6 @@ class ViewMonitoringSession extends ViewRecord implements Tables\Contracts\HasTa
                     $this->record->refresh();
                 }),
 
-            Action::make('scan')
-                ->label('სკანირება')
-                ->icon('heroicon-o-camera')
-                ->color('gray')
-                ->modalContent(view('filament.modals.qr-scanner'))
-                ->modalSubmitAction(false)
-                ->modalCancelActionLabel('დახურვა')
-                ->modalWidth('sm'),
-
             Action::make('print')
                 ->label('რეპორტი')
                 ->icon('heroicon-o-printer')
