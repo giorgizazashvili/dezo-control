@@ -24,7 +24,7 @@ Route::middleware('auth')->group(function () {
         $pestQuantityByCode = $allLogs
             ->filter(fn ($l) => $l->unique_code)
             ->groupBy('unique_code')
-            ->map(fn ($logs) => $logs->sum(fn ($l) => (float) $l->pest_quantity));
+            ->map(fn ($logs) => $logs->unique('monitoring_id')->sum(fn ($l) => (float) $l->pest_quantity));
 
         $allPlacementItems = \App\Models\MovementProductPlacementItem::query()
             ->whereHas('movement', fn ($q) => $q
