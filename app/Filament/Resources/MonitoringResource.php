@@ -170,6 +170,16 @@ class MonitoringResource extends Resource
                         ->minValue(0)
                         ->nullable()
                         ->live()
+                        ->afterStateHydrated(function (?string $state, Set $set): void {
+                            $quantity = (int) $state;
+                            if ($quantity <= 4) {
+                                $set('risk_level', 'დაბალი / Low');
+                            } elseif ($quantity <= 7) {
+                                $set('risk_level', 'საშუალო / Medium');
+                            } else {
+                                $set('risk_level', 'მაღალი / High');
+                            }
+                        })
                         ->afterStateUpdated(function (?string $state, Set $set): void {
                             $quantity = (int) $state;
                             if ($quantity <= 4) {
