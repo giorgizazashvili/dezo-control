@@ -107,9 +107,9 @@ class MonitoringReportResource extends Resource
                     ->placeholder('—')
                     ->badge()
                     ->color(fn (?string $state) => match ($state) {
-                        'მაღალი' => 'danger',
-                        'საშუალო' => 'warning',
-                        'დაბალი' => 'success',
+                        'მაღალი / High' => 'danger',
+                        'საშუალო / Medium' => 'warning',
+                        'დაბალი / Low' => 'success',
                         default => 'gray',
                     }),
             ])

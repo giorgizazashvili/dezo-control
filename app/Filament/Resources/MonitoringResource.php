@@ -20,6 +20,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -167,7 +168,18 @@ class MonitoringResource extends Resource
                         ->label('მავნებლის რაოდენობა')
                         ->numeric()
                         ->minValue(0)
-                        ->nullable(),
+                        ->nullable()
+                        ->live()
+                        ->afterStateUpdated(function (?string $state, Set $set): void {
+                            $quantity = (int) $state;
+                            if ($quantity <= 4) {
+                                $set('risk_level', 'დაბალი / Low');
+                            } elseif ($quantity <= 7) {
+                                $set('risk_level', 'საშუალო / Medium');
+                            } else {
+                                $set('risk_level', 'მაღალი / High');
+                            }
+                        }),
 
                     Select::make('bait_status')
                         ->label('სატყუარას მდგომარეობა')
@@ -180,11 +192,10 @@ class MonitoringResource extends Resource
                     Select::make('risk_level')
                         ->label('რისკის დონე')
                         ->options(fn () => MonitoringOption::where('type', 'risk_level')->pluck('name', 'name'))
-                        ->searchable()
                         ->nullable()
-                        ->default('დაბალი')
-                        ->createOptionForm([TextInput::make('name')->label('სახელი')->required()])
-                        ->createOptionUsing(fn (array $data): string => MonitoringOption::firstOrCreate(['type' => 'risk_level', 'name' => $data['name']])->name),
+                        ->default('დაბალი / Low')
+                        ->disabled()
+                        ->dehydrated(),
 
                     Select::make('action_taken')
                         ->label('მიღებული ზომა')
