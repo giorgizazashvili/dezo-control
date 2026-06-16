@@ -141,6 +141,24 @@ Route::middleware('auth')->group(function () {
         );
     })->name('export.unscanned-devices-report');
 
+    Route::get('/export/pest-activity-report', function (\Illuminate\Http\Request $request) {
+        set_time_limit(300);
+
+        $organizationId = $request->integer('organization_id');
+        $dateFrom = $request->string('date_from')->toString();
+        $dateTo = $request->string('date_to')->toString();
+        $filename = "trend-analysis-{$organizationId}-{$dateFrom}-{$dateTo}.xlsx";
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\PestActivityReportExport(
+                organizationId: $organizationId,
+                dateFrom: $dateFrom,
+                dateTo: $dateTo,
+            ),
+            $filename
+        );
+    })->name('export.pest-activity-report');
+
     Route::get('/export/product-placement-template', function () {
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\ProductPlacementTemplateExport,
