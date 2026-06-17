@@ -45,6 +45,12 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
     /** @var array<string, float> */
     private array $deviceActivity = [];
 
+    /** @var array<string, int> */
+    private array $baitFull = [];
+
+    /** @var array<string, int> */
+    private array $baitPartial = [];
+
     /** @var array<string, string> */
     private array $zoneRisks = [];
 
@@ -169,15 +175,31 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
                 : 0.0;
         }
 
-        $this->zoneRisks = MonitoringLog::query()
-            ->where('organization_id', $this->organizationId)
-            ->whereBetween('created_at', [
+        $baitRaw = Monitoring::query()
+            ->join('monitoring_sessions', 'monitorings.monitoring_session_id', '=', 'monitoring_sessions.id')
+            ->where('monitoring_sessions.organization_id', $this->organizationId)
+            ->whereBetween('monitoring_sessions.started_at', [
                 Carbon::parse($this->dateFrom)->startOfDay(),
                 Carbon::parse($this->dateTo)->endOfDay(),
             ])
+            ->whereNotNull('monitorings.bait_status')
+            ->selectRaw('YEAR(monitoring_sessions.started_at) as yr, MONTH(monitoring_sessions.started_at) as mo, monitorings.bait_status, COUNT(*) as cnt')
+            ->groupBy('yr', 'mo', 'monitorings.bait_status')
+            ->get();
+
+        foreach ($this->months as $month) {
+            $label = $month['label'];
+            $rows = $baitRaw->filter(fn ($r) => Carbon::createFromDate($r->yr, $r->mo, 1)->format('M Y') === $label);
+            $this->baitFull[$label] = (int) $rows->filter(fn ($r) => str_contains($r->bait_status, 'სრულად'))->sum('cnt');
+            $this->baitPartial[$label] = (int) $rows->filter(fn ($r) => str_contains($r->bait_status, 'ნაწილობრივ'))->sum('cnt');
+        }
+
+        $this->zoneRisks = MonitoringLog::query()
+            ->where('organization_id', $this->organizationId)
             ->whereNotNull('zone')
             ->where('zone', '!=', '')
             ->whereNotNull('risk_level')
+            ->where('risk_level', '!=', '')
             ->get()
             ->groupBy('zone')
             ->map(function ($logs) {
@@ -185,6 +207,7 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
 
                 return $logs->sortByDesc(fn ($l) => $order[$l->risk_level] ?? 0)->first()->risk_level;
             })
+            ->sortKeys()
             ->toArray();
     }
 
@@ -201,7 +224,8 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
         }
 
         $monthCount = count($this->months);
-        $dataEndRow = 1 + $monthCount;
+        $dataStartRow = 3;
+        $dataEndRow = 2 + $monthCount;
 
         // Pest type columns: B(2) through F(6)
         $pestColCount = count(self::PEST_COLUMNS);
@@ -211,7 +235,7 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
         $xAxisValues = [
             new DataSeriesValues(
                 'String',
-                "'".self::SHEET_TITLE."'!\$A\$2:\$A\${$dataEndRow}",
+                "'".self::SHEET_TITLE."'!\$A\${$dataStartRow}:\$A\${$dataEndRow}",
                 null,
                 $monthCount
             ),
@@ -227,16 +251,25 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
             );
             $dataSeriesValues[] = new DataSeriesValues(
                 'Number',
-                "'".self::SHEET_TITLE."'!\${$col}\$2:\${$col}\${$dataEndRow}",
+                "'".self::SHEET_TITLE."'!\${$col}\${$dataStartRow}:\${$col}\${$dataEndRow}",
                 null,
                 $monthCount
             );
         }
 
+        // Bait status columns: I (index 9) and J (index 10), labels from row 2
+        $dataSeriesLabels[] = new DataSeriesValues('String', "'".self::SHEET_TITLE."'!\$I\$2", null, 1);
+        $dataSeriesValues[] = new DataSeriesValues('Number', "'".self::SHEET_TITLE."'!\$I\${$dataStartRow}:\$I\${$dataEndRow}", null, $monthCount);
+
+        $dataSeriesLabels[] = new DataSeriesValues('String', "'".self::SHEET_TITLE."'!\$J\$2", null, 1);
+        $dataSeriesValues[] = new DataSeriesValues('Number', "'".self::SHEET_TITLE."'!\$J\${$dataStartRow}:\$J\${$dataEndRow}", null, $monthCount);
+
+        $totalSeriesCount = $pestColCount + 2;
+
         $series = new DataSeries(
             DataSeries::TYPE_BARCHART,
             DataSeries::GROUPING_CLUSTERED,
-            range(0, $pestColCount - 1),
+            range(0, $totalSeriesCount - 1),
             $dataSeriesLabels,
             $xAxisValues,
             $dataSeriesValues,
@@ -250,10 +283,10 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
 
         $chartStartRow = $dataEndRow + 2;
         $chartEndRow = $chartStartRow + 20;
-        $lastPestCol = Coordinate::stringFromColumnIndex($pestColCount + 1); // F
+        $lastChartCol = Coordinate::stringFromColumnIndex($totalSeriesCount + 1); // J
 
         $chart->setTopLeftPosition("A{$chartStartRow}");
-        $chart->setBottomRightPosition("{$lastPestCol}{$chartEndRow}");
+        $chart->setBottomRightPosition("{$lastChartCol}{$chartEndRow}");
 
         return [$chart];
     }
@@ -269,9 +302,9 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
 
     private function writeSheet(Worksheet $sheet): void
     {
-        // Column H = index 8 (skip G=7)
-        $activityColIndex = 8;
         $activityCol = 'H';
+        $baitFullCol = 'I';
+        $baitPartialCol = 'J';
 
         $yellowBold = [
             'font' => ['bold' => true],
@@ -286,23 +319,41 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
             ],
         ];
 
-        // Row 1: headers
+        // Row 1: main headers — merge A, B-F, H vertically across rows 1-2
         $sheet->setCellValue('A1', 'Month / თვე');
-        $sheet->getStyle('A1')->applyFromArray($yellowBold);
+        $sheet->mergeCells('A1:A2');
+        $sheet->getStyle('A1:A2')->applyFromArray($yellowBold);
 
         foreach (array_values(self::PEST_COLUMNS) as $index => $label) {
             $col = Coordinate::stringFromColumnIndex($index + 2);
             $sheet->setCellValue("{$col}1", $label);
-            $sheet->getStyle("{$col}1")->applyFromArray($yellowBold);
+            $sheet->mergeCells("{$col}1:{$col}2");
+            $sheet->getStyle("{$col}1:{$col}2")->applyFromArray($yellowBold);
         }
 
-        $sheet->setCellValue("{$activityCol}1", 'შემოფსებული მოწყობილობების აქტივობა %');
-        $sheet->getStyle("{$activityCol}1")->applyFromArray($yellowBold);
-        $sheet->getRowDimension(1)->setRowHeight(50);
+        $sheet->mergeCells('G1:G2');
 
-        // Data rows
+        $sheet->setCellValue("{$activityCol}1", 'შემოფსებული მოწყობილობების აქტივობა %');
+        $sheet->mergeCells("{$activityCol}1:{$activityCol}2");
+        $sheet->getStyle("{$activityCol}1:{$activityCol}2")->applyFromArray($yellowBold);
+
+        // Merged header "სატყუარის მდგომარეობა" spanning I1:J1
+        $sheet->setCellValue("{$baitFullCol}1", 'სატყუარის მდგომარეობა');
+        $sheet->mergeCells("{$baitFullCol}1:{$baitPartialCol}1");
+        $sheet->getStyle("{$baitFullCol}1:{$baitPartialCol}1")->applyFromArray($yellowBold);
+
+        // Row 2: sub-headers for bait columns
+        $sheet->setCellValue("{$baitFullCol}2", 'შეჭმული სრულად');
+        $sheet->getStyle("{$baitFullCol}2")->applyFromArray($yellowBold);
+        $sheet->setCellValue("{$baitPartialCol}2", 'შეჭმული ნაწილობრივ');
+        $sheet->getStyle("{$baitPartialCol}2")->applyFromArray($yellowBold);
+
+        $sheet->getRowDimension(1)->setRowHeight(50);
+        $sheet->getRowDimension(2)->setRowHeight(40);
+
+        // Data rows start at row 3
         foreach ($this->months as $i => $month) {
-            $row = $i + 2;
+            $row = $i + 3;
             $label = $month['label'];
 
             $sheet->setCellValue("A{$row}", $label);
@@ -316,15 +367,21 @@ class PestActivityReportExport implements WithCharts, WithEvents, WithTitle
 
             $sheet->setCellValue("{$activityCol}{$row}", $this->deviceActivity[$label] ?? 0.0);
             $sheet->getStyle("{$activityCol}{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->setCellValue("{$baitFullCol}{$row}", $this->baitFull[$label] ?? 0);
+            $sheet->getStyle("{$baitFullCol}{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+            $sheet->setCellValue("{$baitPartialCol}{$row}", $this->baitPartial[$label] ?? 0);
+            $sheet->getStyle("{$baitPartialCol}{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         }
 
-        // Auto-size columns A-H
-        foreach (range(1, $activityColIndex) as $i) {
+        // Auto-size columns A-J
+        foreach (range(1, 10) as $i) {
             $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
 
         // Zone / risk table (after chart)
-        $dataEndRow = 1 + count($this->months);
+        $dataEndRow = 2 + count($this->months);
         $zoneStartRow = $dataEndRow + 24;
         $this->writeZoneTable($sheet, $zoneStartRow);
     }
