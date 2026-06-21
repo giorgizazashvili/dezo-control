@@ -5,8 +5,6 @@ namespace App\Filament\Resources\MonitoringResource\Pages;
 use App\Exceptions\InsufficientStockException;
 use App\Filament\Resources\MonitoringResource;
 use App\Filament\Resources\MonitoringSessionResource;
-use App\Models\Movement;
-use App\Models\MovementProductPlacementItem;
 use App\Services\MonitoringService;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -31,7 +29,7 @@ class EditMonitoring extends EditRecord
     {
         $monitoring = $this->record->load(
             'movementProductItem.productSettlement.dimension',
-            'monitoringSession'
+            'movementProductPlacementItem'
         );
 
         $item = $monitoring->movementProductItem;
@@ -39,23 +37,16 @@ class EditMonitoring extends EditRecord
         if ($item) {
             $product = $item->productSettlement;
             $data['_device_name'] = $product->name.' — '.($product->dimension?->name ?? '');
+        }
 
-            $placementItem = MovementProductPlacementItem::query()
-                ->where('product_settlement_id', $item->product_settlement_id)
-                ->whereHas('movement', fn ($q) => $q
-                    ->where('organization_id', $monitoring->monitoringSession->organization_id)
-                    ->where('operation_type', Movement::OPERATION_PRODUCT_PLACEMENT)
-                )
-                ->latest('id')
-                ->first();
+        $placementItem = $monitoring->movementProductPlacementItem;
 
-            if ($placementItem) {
-                $data['_device_location'] = implode(' / ', array_filter([
-                    $placementItem->unique_code,
-                    $placementItem->zone,
-                    $placementItem->location,
-                ]));
-            }
+        if ($placementItem) {
+            $data['_device_location'] = implode(' / ', array_filter([
+                $placementItem->unique_code,
+                $placementItem->zone,
+                $placementItem->location,
+            ]));
         }
 
         return $data;
