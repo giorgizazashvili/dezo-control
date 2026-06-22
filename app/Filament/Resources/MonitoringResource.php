@@ -63,10 +63,11 @@ class MonitoringResource extends Resource
                         : null;
                 }),
 
-            TextInput::make('_device_name')
+            Textarea::make('_device_name')
                 ->label('მოწყობილობა')
                 ->disabled()
                 ->dehydrated(false)
+                ->autosize()
                 ->default(function () {
                     $placementItemId = request()->query('placement_item_id');
                     if (! $placementItemId) {
@@ -81,10 +82,11 @@ class MonitoringResource extends Resource
                 })
                 ->columnSpan(2),
 
-            TextInput::make('_device_location')
+            Textarea::make('_device_location')
                 ->label('კოდი / ზონა / მდებარეობა')
                 ->disabled()
                 ->dehydrated(false)
+                ->autosize()
                 ->default(function () {
                     $placementItemId = request()->query('placement_item_id');
                     if (! $placementItemId) {
