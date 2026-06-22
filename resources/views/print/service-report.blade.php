@@ -105,6 +105,32 @@
       font-size: 11px;
     }
 
+    .photo-grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+
+    .photo-cell {
+      width: 50%;
+      padding: 4px;
+      vertical-align: top;
+      text-align: center;
+    }
+
+    .photo-img {
+      max-width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      border: 1px solid #ccc;
+    }
+
+    .photo-label {
+      font-size: 10px;
+      color: #555;
+      margin-top: 3px;
+    }
+
     .signature-row {
       width: 100%;
       border-collapse: collapse;
@@ -330,6 +356,57 @@
   @if ($session->notes)
     <div class="sec-title">შენიშვნა</div>
     <div class="notes-block">{{ $session->notes }}</div>
+  @endif
+
+  @php
+      $encodePhoto = function ($photo) {
+          $path = \Illuminate\Support\Facades\Storage::disk('public')->path($photo);
+          if (! is_file($path)) {
+              return null;
+          }
+          $mime = function_exists('mime_content_type') ? mime_content_type($path) : 'image/jpeg';
+
+          return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
+      };
+
+      $photoItems = collect($session->photos ?? [])
+          ->map(fn ($photo) => ['src' => $encodePhoto($photo), 'label' => null]);
+
+      $monitoringPhotoItems = $session->monitorings
+          ->flatMap(function ($m) use ($encodePhoto) {
+              $code = $m->logs->first()?->unique_code;
+              $name = $m->movementProductItem?->productSettlement?->name;
+              $label = trim(implode(' — ', array_filter([$code, $name]))) ?: null;
+
+              return collect($m->inspection_photos ?? [])
+                  ->map(fn ($photo) => ['src' => $encodePhoto($photo), 'label' => $label]);
+          });
+
+      $photoItems = $photoItems
+          ->concat($monitoringPhotoItems)
+          ->filter(fn ($item) => $item['src'])
+          ->values();
+  @endphp
+
+  @if ($photoItems->isNotEmpty())
+    <div class="sec-title">ფოტოები</div>
+    <table class="photo-grid">
+      @foreach ($photoItems->chunk(2) as $row)
+        <tr>
+          @foreach ($row as $item)
+            <td class="photo-cell">
+              <img class="photo-img" src="{{ $item['src'] }}">
+              @if ($item['label'])
+                <div class="photo-label">{{ $item['label'] }}</div>
+              @endif
+            </td>
+          @endforeach
+          @if ($row->count() < 2)
+            <td class="photo-cell"></td>
+          @endif
+        </tr>
+      @endforeach
+    </table>
   @endif
 
   <table class="signature-row">
