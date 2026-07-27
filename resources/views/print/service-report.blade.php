@@ -365,8 +365,35 @@
               return null;
           }
           $mime = function_exists('mime_content_type') ? mime_content_type($path) : 'image/jpeg';
+          $contents = file_get_contents($path);
 
-          return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
+          // iPhone photos store rotation as EXIF metadata instead of rotating the
+          // pixel data, and dompdf ignores it — correct it here before rendering.
+          if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+              $orientation = @exif_read_data($path)['Orientation'] ?? 1;
+
+              if (in_array($orientation, [3, 6, 8], true)) {
+                  $image = @imagecreatefromstring($contents);
+
+                  if ($image !== false) {
+                      $angle = match ($orientation) {
+                          3 => 180,
+                          6 => -90,
+                          8 => 90,
+                          default => 0,
+                      };
+                      $rotated = imagerotate($image, $angle, 0);
+                      imagedestroy($image);
+
+                      ob_start();
+                      imagejpeg($rotated, null, 90);
+                      $contents = ob_get_clean();
+                      imagedestroy($rotated);
+                  }
+              }
+          }
+
+          return 'data:'.$mime.';base64,'.base64_encode($contents);
       };
 
       $photoItems = collect($session->photos ?? [])
