@@ -218,7 +218,11 @@
       </td>
     </tr>
     <tr>
-      <td colspan="2" style="border-top:none; padding:0;"></td>
+      <td colspan="2" style="border-top:none; padding:5px 9px;">
+        <div>ტელ: 555400635</div>
+        <div>ელ. ფოსტა: tako@dezo.ge</div>
+        <div>საიტი: www.dezo.ge</div>
+      </td>
       <td style="border-top:none; padding:5px 9px;">
         <div class="date-block">
           <div class="date-item">
