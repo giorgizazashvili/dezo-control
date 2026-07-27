@@ -56,10 +56,10 @@
       vertical-align: bottom;
     }
 
-    .contact-block { padding: 0; width: 100%; border-collapse: collapse; height: 100%; }
+    .contact-block { padding: 0; width: 100%; border-collapse: collapse; }
     .contact-item {
-      padding: 4px 0;
-      font-size: 13px;
+      padding: 3px 0;
+      font-size: 12px;
       border-bottom: 1px solid #ddd;
     }
     .contact-item:last-child { border-bottom: none; }
