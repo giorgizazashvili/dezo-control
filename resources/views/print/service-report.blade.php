@@ -56,6 +56,15 @@
       vertical-align: bottom;
     }
 
+    .contact-block { padding: 0; width: 100%; border-collapse: collapse; height: 100%; }
+    .contact-item {
+      padding: 4px 0;
+      font-size: 13px;
+      border-bottom: 1px solid #ddd;
+    }
+    .contact-item:last-child { border-bottom: none; }
+    .contact-lbl { display: inline-block; min-width: 75px; font-weight: bold; }
+
     .svc-desc {
       padding: 6px 2px;
       margin-bottom: 10px;
@@ -219,9 +228,11 @@
     </tr>
     <tr>
       <td colspan="2" style="border-top:none; padding:5px 9px;">
-        <div>ტელ: 555400635</div>
-        <div>ელ. ფოსტა: tako@dezo.ge</div>
-        <div>საიტი: www.dezo.ge</div>
+        <div class="contact-block">
+          <div class="contact-item"><span class="contact-lbl">ტელ:</span> 555400635</div>
+          <div class="contact-item"><span class="contact-lbl">ელ. ფოსტა:</span> tako@dezo.ge</div>
+          <div class="contact-item"><span class="contact-lbl">საიტი:</span> www.dezo.ge</div>
+        </div>
       </td>
       <td style="border-top:none; padding:5px 9px;">
         <div class="date-block">
