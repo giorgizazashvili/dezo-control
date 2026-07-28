@@ -26,6 +26,7 @@ class AppPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('app')
+            ->spa()
             ->brandName('Dezo Control')
             ->brandLogo(asset('images/logo.jpeg'))
             ->brandLogoHeight('2.5rem')
