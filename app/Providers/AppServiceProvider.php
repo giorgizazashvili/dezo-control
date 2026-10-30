@@ -22,8 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        URL::forceScheme('https');
-        $this->app['request']->server->set('HTTPS', 'on');
+        if (! $this->app->isLocal()) {
+            URL::forceScheme('https');
+            $this->app['request']->server->set('HTTPS', 'on');
+        }
 
         FilamentView::registerRenderHook(
             PanelsRenderHook::SIDEBAR_FOOTER,
